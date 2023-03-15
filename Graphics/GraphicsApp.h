@@ -9,6 +9,8 @@
 #include <glm/mat4x4.hpp>
 #include <list>
 
+#include "OBJMesh.h"
+
 class GraphicsApp : public aie::Application {
 public:
 
@@ -20,17 +22,44 @@ public:
 
 	virtual void update(float deltaTime);
 	virtual void draw();
+
+	void SolarSystem(float time);
 	
 protected:
 	bool LaunchShaders();
+	void ImGUIRefesher();
+
+	bool QuadLoader();
+	void QuadDraw(glm::mat4 pvm);
+
+	bool BunnyLoader();
+	void BunnyDraw(glm::mat4 pvm);
+
+	bool BoxLoading();
+	void BoxDraw(glm::mat4 pvm);
+
+	void PhongDraw(glm::mat4 pvm, glm::mat4 transform);
 
 	// camera transforms
-	glm::mat4	m_viewMatrix;
-	glm::mat4	m_projectionMatrix;
+	glm::mat4			m_viewMatrix;
+	glm::mat4			m_projectionMatrix;
 
-	std::list<Planet> planets[8];
+	aie::ShaderProgram	m_simpleShader;
+	aie::ShaderProgram	m_colorShader;
+	aie::ShaderProgram	m_phongShader;
 
-	aie::ShaderProgram m_simpleShader;
-	Mesh m_quadMesh;
-	glm::mat4 m_quadTransform;
+	Mesh				m_quadMesh;
+	glm::mat4			m_quadTransform;
+
+	aie::OBJMesh		m_bunnyMesh;
+	glm::mat4			m_bunnyTransform;
+
+	struct Light {
+		glm::vec3 direction;
+		glm::vec3 color;
+	};
+
+	Light m_light;
+	glm::vec3 m_ambientLight;
+	float m_specularStrength;
 };

@@ -13,6 +13,8 @@ public:
 		glm::vec4 position;
 		glm::vec4 normal;
 		glm::vec2 texCoord;
+
+		
 	};
 
 	// Will be used to make a simple quad
@@ -22,7 +24,9 @@ public:
 	void InitialiseFullScreenQuad(); 
 
 	// Will be used for implemetive a primitive
-	void Initialise();
+	void Initialise(unsigned int vertexCount, const Vertex* vertices, 
+		unsigned int indexCount = 0, unsigned int* indices = nullptr);
+
 	virtual void Draw();
 
 protected:
