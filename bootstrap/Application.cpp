@@ -6,6 +6,9 @@
 #include "Input.h"
 #include "imgui_glfw3.h"
 
+#include "../Graphics/Camera.h"
+
+
 namespace aie {
 
 Application::Application()
@@ -130,8 +133,36 @@ void Application::run(const char* title, int width, int height, bool fullscreen)
 	destroyWindow();
 }
 
+bool Application::update(float deltaTime)
+{
+	m_camera.update(0.1f, m_window);
+
+	m_lastMousePosition = m_mousePosition;
+
+
+
+	return glfwWindowShouldClose(m_window) == false &&
+		glfwGetKey(m_window, GLFW_KEY_ESCAPE) != GLFW_PRESS;
+
+	glm::vec2 mouseDelta = Application::get()->getMouseDelta();
+
+	const float turnSpeed = 0.1f;
+	// if the right button is down, increment theta and phi
+	if (glfwGetMouseButton(m_window, 1))
+	{
+		m_theta += turnSpeed * mouseDelta.x;
+		m_phi -= turnSpeed * mouseDelta.y;
+	}
+}
+
 bool Application::hasWindowClosed() {
 	return glfwWindowShouldClose(m_window) == GL_TRUE;
+}
+
+void Application::SetMousePosition(GLFWwindow* window, double x, double y)
+{
+	s_instance->m_mousePosition.x = (float)x;
+	s_instance->m_mousePosition.y = (float)y;
 }
 
 void Application::clearScreen() {

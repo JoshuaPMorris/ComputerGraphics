@@ -8,6 +8,9 @@
 
 #include "imgui.h"
 
+#include "Camera.h"
+#include "../dependencies/glfw/include/GLFW/glfw3.h"
+
 using glm::vec3;
 using glm::vec4;
 using glm::mat4;
@@ -28,6 +31,9 @@ bool GraphicsApp::startup() {
 	// initialise gizmo primitive counts
 	Gizmos::create(10000, 10000, 10000, 10000);
 
+	s_instance = this;
+	glfwSetCursorPosCallback(m_window, &Application::SetMousePosition);
+
 	// create simple camera transforms
 	m_viewMatrix = glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
 	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, 16.0f / 9.0f, 0.1f, 1000.0f);
@@ -40,10 +46,13 @@ void GraphicsApp::shutdown() {
 	Gizmos::destroy();
 }
 
-void GraphicsApp::update(float deltaTime) {
+bool GraphicsApp::update(float deltaTime) {
 
 	// query time since application started
 	float time = getTime();
+
+	// get mouse pos
+	glm::vec2 mousepos = Application::get()->getMousePosition();
 
 	// rotate camera
 	m_viewMatrix = glm::lookAt(vec3(glm::sin(time) * 10, 10, glm::cos(time) * 10),
@@ -105,7 +114,7 @@ void GraphicsApp::draw() {
 	//BunnyDraw(pvm);
 	//PhongDraw(pvm * m_bunnyTransform, m_bunnyTransform);
 
-	BoxDraw(pvm);
+	//BoxDraw(pvm);
 
 	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
 }

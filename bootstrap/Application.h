@@ -1,4 +1,5 @@
 #pragma once
+#include "../Graphics/Camera.h"
 
 // forward declared structure for access to GLFW window
 struct GLFWwindow;
@@ -21,8 +22,19 @@ public:
 	// these functions must be implemented by a derived class
 	virtual bool startup() = 0;
 	virtual void shutdown() = 0;
-	virtual void update(float deltaTime) = 0;
+	virtual bool update(float deltaTime) ;
 	virtual void draw() = 0;
+
+	// singleton pattern
+	static Application* get() { return s_instance; }
+	glm::vec2 getMousePosition() { return m_mousePosition; }
+	glm::vec2 getMouseDelta()
+	{
+		return m_mousePosition - m_lastMousePosition;
+	}
+
+	// set up mouse input
+	static void SetMousePosition(GLFWwindow* window, double x, double y);
 
 	// wipes the screen clear to begin a frame of drawing
 	void clearScreen();
@@ -56,6 +68,7 @@ public:
 	float getTime() const;
 
 protected:
+	static Application* s_instance;
 
 	virtual bool createWindow(const char* title, int width, int height, bool fullscreen);
 	virtual void destroyWindow();
@@ -66,6 +79,11 @@ protected:
 	bool			m_gameOver;
 	
 	unsigned int	m_fps;
+
+	glm::vec2 m_mousePosition;
+	glm::vec2 m_lastMousePosition;
+
+	Camera m_camera;
 
 };
 

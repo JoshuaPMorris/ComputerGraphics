@@ -20,7 +20,7 @@ public:
 	virtual bool startup();
 	virtual void shutdown();
 
-	virtual void update(float deltaTime);
+	virtual bool update(float deltaTime);
 	virtual void draw();
 
 	void SolarSystem(float time);
