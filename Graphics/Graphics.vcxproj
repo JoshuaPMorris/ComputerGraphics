@@ -164,6 +164,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Instance.cpp" />
+    <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SimpleCamera.cpp" />
     <ClCompile Include="GraphicsApp.cpp" />
     <ClCompile Include="main.cpp" />
@@ -172,8 +174,11 @@
     <ClCompile Include="Planet.cpp" />
     <ClCompile Include="RenderTarget.cpp" />
     <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="StationaryCamera.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Instance.h" />
+    <ClInclude Include="Scene.h" />
     <ClInclude Include="SimpleCamera.h" />
     <ClInclude Include="GraphicsApp.h" />
     <ClInclude Include="Mesh.h" />
@@ -181,6 +186,7 @@
     <ClInclude Include="Planet.h" />
     <ClInclude Include="RenderTarget.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="StationaryCamera.h" />
     <ClInclude Include="tiny_obj_loader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

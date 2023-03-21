@@ -4,12 +4,15 @@
 in vec4 vPosition;
 in vec3 vNormal;
 in vec2 vTexCoord;
+in vec3 vTangent;
+in vec3 vBiTangent;
 
 out vec4 FragColor;
 
 uniform vec3 CameraPosition;
 uniform sampler2D diffuseTexture;
 uniform sampler2D specularTexture;
+uniform sampler2D normalTexture;
 
 // Model Data
 uniform vec3 Ka; // The ambient material colour
@@ -25,10 +28,17 @@ uniform vec3 LightDirection;
 void main() {
     // Set the normal and light direction
     vec3 N = normalize(vNormal);
+    vec3 T = normalize(vTangent);
+    vec3 B = normalize(vBiTangent);
     vec3 L = normalize(LightDirection);
+
+    mat3 TBN = mat3(T, B, N);
 
     vec3 texDiffuse = texture(diffuseTexture, vTexCoord).rgb;
     vec3 texSpecular = texture(specularTexture, vTexCoord).rgb;
+    vec3 texNormal = texture(normalTexture, vTexCoord).rgb;
+
+    N = TBN * (texNormal * 2 - 1);
 
     // Calculate the negative light direction (Lambert term)
     float lambertTerm = max(0, min(1, dot(N, -L)));

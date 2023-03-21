@@ -34,12 +34,30 @@ bool GraphicsApp::startup() {
 	m_viewMatrix = glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
 	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, 16.0f / 9.0f, 0.1f, 1000.0f);
 
+
+
+
+	m_bunny = false;
+	m_solarsystem = false;
+	m_soulSpear = false;
+	m_plain = false;
+
+	Light light;
+	light.color = { 4, 3, 5 };
+	light.direction = { 1, -1, 1 };
+	m_ambientLight = { 30.f, 30.f, 30.f };
+	m_specularStrength = 0.f;
+
+	m_scene = new Scene(&m_camera, glm::vec2(getWindowWidth(),
+		getWindowHeight()), light, m_ambientLight);
+
 	return LaunchShaders();
 }
 
 void GraphicsApp::shutdown() {
 
 	Gizmos::destroy();
+	delete m_scene;
 }
 
 void GraphicsApp::update(float deltaTime) {
@@ -71,7 +89,7 @@ void GraphicsApp::update(float deltaTime) {
 	// add a transform so that we can see the axis
 	Gizmos::addTransform(mat4(1));
 	
-	//SolarSystem(time);
+	if (m_solarsystem) SolarSystem(time);
 
 	// quit if we press escape
 	aie::Input* input = aie::Input::getInstance();
@@ -81,9 +99,7 @@ void GraphicsApp::update(float deltaTime) {
 	m_light.direction = 
 		glm::normalize(glm::vec3(glm::cos(time * 2), glm::sin(time * 2), 0));
 
-	m_light.color = { 0, 1, 1 };
-	m_ambientLight = { 0.f, 0.f, 0.f };
-	m_specularStrength = 10.f;
+
 	ImGUIRefesher();
 
 	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
@@ -99,21 +115,14 @@ void GraphicsApp::draw() {
 	m_projectionMatrix = m_camera.getProjectionMatrix(getWindowWidth(), getWindowHeight()); 
 	m_viewMatrix = m_camera.getViewMatrix();
 
-	// bind shader
-	m_simpleShader.bind();
-
-	// Draw the quad setup in QuadLoader()
 	auto pv = m_projectionMatrix * m_viewMatrix;
-	//QuadDraw(pv * m_quadTransform);
 
-	// Draw the bunny setup in BunnyLoader()
-	//BunnyDraw(pvm);
-	//PhongDraw(pvm * m_bunnyTransform, m_bunnyTransform);
+	m_scene->Draw();
 
-	// bind transform
-	//m_phongShader.bindUniform("ProjectionViewModel", pv);
-
-	ObjDraw(pv, m_spearTransform, &m_spearMesh);
+	//if (m_soulSpear) ObjDraw(pv, m_spearTransform, &m_spearMesh);
+	//if (m_bunny) ObjDraw(pv, m_bunnyTransform, &m_bunnyMesh);
+	
+	//if (m_plain) ObjDraw(pv, m_quadTransform, &m_quadMesh);
 
 	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
 }
@@ -165,6 +174,9 @@ bool GraphicsApp::LaunchShaders()
 	if (!SpearLoader())
 		return false;
 
+	m_scene->AddInstance(new Instance(m_spearTransform, 
+		&m_spearMesh, &m_normalLitShader));
+
 	return true;
 }
 
@@ -172,13 +184,24 @@ void GraphicsApp::ImGUIRefesher()
 {
 	ImGui::Begin("Light Settings");
 	ImGui::DragFloat3("Global Light Color", 
-		&m_light.color[0], 0.1, 0, 1);
+		&m_light.color[0], 0.1, 0, 100);
 	ImGui::DragFloat3("Global Light Direction", 
-		&m_light.direction[0], 0.1, -1, 1);
+		&m_light.direction[0], 0.1, -1, 100);
 	ImGui::DragFloat3("Ambient Light",
-		&m_ambientLight[0], 0.1, 0, 1);
+		&m_ambientLight[0], 0.1, 0, 100);
 	ImGui::DragFloat("Specular Strength",
-		&m_specularStrength);
+		&m_specularStrength, 1, 0, 100);
+	ImGui::End();
+
+	ImGui::Begin("Mesh Selector");
+	ImGui::Checkbox("Solar System", &m_solarsystem);
+	ImGui::Checkbox("Bunny", &m_bunny);
+	ImGui::Checkbox("Soul Spear", &m_soulSpear);
+	ImGui::Checkbox("Plain", &m_plain);
+	ImGui::End();
+
+	ImGui::Begin("Camera Selector/Settings");
+
 	ImGui::End();
 }
 
@@ -374,7 +397,7 @@ void GraphicsApp::ObjDraw(glm::mat4 pv, glm::mat4 transform, aie::OBJMesh* objMe
 	objMesh->draw();
 }
 
-void GraphicsApp::PhongDraw(glm::mat4 pvm, glm::mat4 transform)
+void GraphicsApp::PhongDraw(glm::mat4 pvm, glm::mat4 transform, float time)
 {
 	// Bind the phong shader
 	m_phongShader.bind();
@@ -395,5 +418,8 @@ void GraphicsApp::PhongDraw(glm::mat4 pvm, glm::mat4 transform)
 	// Bind the transform using the one provided
 	m_phongShader.bindUniform("ModelMatrix", transform);
 
-	m_spearMesh.draw();
+	if (m_soulSpear) m_spearMesh.draw();
+	if (m_solarsystem) SolarSystem(time);
+	if (m_bunny) m_bunnyMesh.draw();
+	if (m_plain) m_quadMesh.Draw();
 }

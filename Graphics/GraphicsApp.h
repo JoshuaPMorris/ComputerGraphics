@@ -11,6 +11,9 @@
 
 #include "OBJMesh.h"
 
+#include "Scene.h"
+#include "Instance.h"
+
 #include "SimpleCamera.h"
 
 class GraphicsApp : public aie::Application {
@@ -36,18 +39,24 @@ protected:
 
 	bool BunnyLoader();
 	void BunnyDraw(glm::mat4 pvm);
-
-
 	
 	// For textured OBJs
 	void ObjDraw(glm::mat4 pv, glm::mat4 transform, aie::OBJMesh* objMesh);
 
 	bool SpearLoader();
 
-	void PhongDraw(glm::mat4 pvm, glm::mat4 transform);
+	void PhongDraw(glm::mat4 pvm, glm::mat4 transform, float time);
 
 	bool BoxLoading();
 	void BoxDraw(glm::mat4 pvm);
+
+	// Scene Selector (bools)
+	bool m_plain;
+	bool m_solarsystem;
+	bool m_bunny;
+	bool m_soulSpear;
+
+	Scene*				m_scene;
 
 	// camera transforms
 	glm::mat4			m_viewMatrix;
@@ -69,11 +78,6 @@ protected:
 	glm::mat4			m_spearTransform;
 	
 	SimpleCamera m_camera;
-
-	struct Light {
-		glm::vec3 direction;
-		glm::vec3 color;
-	};
 
 	Light m_light;
 	glm::vec3 m_ambientLight;

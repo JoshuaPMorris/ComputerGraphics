@@ -8,6 +8,7 @@ public:
     ~SimpleCamera();
 
     virtual void update(float deltaTime);
+    glm::vec2 GetPosition() { return m_position; }
 
     glm::mat4 SimpleCamera::getViewMatrix();
     glm::mat4 SimpleCamera::getProjectionMatrix(float w, float h);
