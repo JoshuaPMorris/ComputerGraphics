@@ -11,6 +11,8 @@
 
 #include "OBJMesh.h"
 
+#include "SimpleCamera.h"
+
 class GraphicsApp : public aie::Application {
 public:
 
@@ -20,7 +22,7 @@ public:
 	virtual bool startup();
 	virtual void shutdown();
 
-	virtual bool update(float deltaTime);
+	virtual void update(float deltaTime);
 	virtual void draw();
 
 	void SolarSystem(float time);
@@ -35,10 +37,17 @@ protected:
 	bool BunnyLoader();
 	void BunnyDraw(glm::mat4 pvm);
 
-	bool BoxLoading();
-	void BoxDraw(glm::mat4 pvm);
+
+	
+	// For textured OBJs
+	void ObjDraw(glm::mat4 pv, glm::mat4 transform, aie::OBJMesh* objMesh);
+
+	bool SpearLoader();
 
 	void PhongDraw(glm::mat4 pvm, glm::mat4 transform);
+
+	bool BoxLoading();
+	void BoxDraw(glm::mat4 pvm);
 
 	// camera transforms
 	glm::mat4			m_viewMatrix;
@@ -47,12 +56,19 @@ protected:
 	aie::ShaderProgram	m_simpleShader;
 	aie::ShaderProgram	m_colorShader;
 	aie::ShaderProgram	m_phongShader;
+	aie::ShaderProgram	m_texturedShader;
+	aie::ShaderProgram  m_normalLitShader;
 
 	Mesh				m_quadMesh;
 	glm::mat4			m_quadTransform;
 
 	aie::OBJMesh		m_bunnyMesh;
 	glm::mat4			m_bunnyTransform;
+
+	aie::OBJMesh		m_spearMesh;
+	glm::mat4			m_spearTransform;
+	
+	SimpleCamera m_camera;
 
 	struct Light {
 		glm::vec3 direction;
@@ -62,4 +78,5 @@ protected:
 	Light m_light;
 	glm::vec3 m_ambientLight;
 	float m_specularStrength;
+
 };

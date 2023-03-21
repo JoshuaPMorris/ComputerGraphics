@@ -1,90 +1,72 @@
 #pragma once
-#include "../Graphics/Camera.h"
 
 // forward declared structure for access to GLFW window
 struct GLFWwindow;
 
 namespace aie {
 
-// this is the pure-virtual base class that wraps up an application for us.
-// we derive our own applications from this class
-class Application {
-public:
+	// this is the pure-virtual base class that wraps up an application for us.
+	// we derive our own applications from this class
+	class Application {
+	public:
 
-	Application();
-	virtual ~Application();
+		Application();
+		virtual ~Application();
 
-	// creates a window and begins the game loop which calls update() and draw() repeatedly
-	// it first calls startup() and if that succeeds it then starts the loop,
-	// ending with shutdown() if m_gameOver is true
-	void run(const char* title, int width, int height, bool fullscreen);
+		// creates a window and begins the game loop which calls update() and draw() repeatedly
+		// it first calls startup() and if that succeeds it then starts the loop,
+		// ending with shutdown() if m_gameOver is true
+		void run(const char* title, int width, int height, bool fullscreen);
 
-	// these functions must be implemented by a derived class
-	virtual bool startup() = 0;
-	virtual void shutdown() = 0;
-	virtual bool update(float deltaTime) ;
-	virtual void draw() = 0;
+		// these functions must be implemented by a derived class
+		virtual bool startup() = 0;
+		virtual void shutdown() = 0;
+		virtual void update(float deltaTime) = 0;
+		virtual void draw() = 0;
 
-	// singleton pattern
-	static Application* get() { return s_instance; }
-	glm::vec2 getMousePosition() { return m_mousePosition; }
-	glm::vec2 getMouseDelta()
-	{
-		return m_mousePosition - m_lastMousePosition;
-	}
+		// wipes the screen clear to begin a frame of drawing
+		void clearScreen();
 
-	// set up mouse input
-	static void SetMousePosition(GLFWwindow* window, double x, double y);
+		// sets the colour that the sceen is cleared to
+		void setBackgroundColour(float r, float g, float b, float a = 1.0f);
 
-	// wipes the screen clear to begin a frame of drawing
-	void clearScreen();
+		// show or hide the OS cursor
+		void setShowCursor(bool visible);
 
-	// sets the colour that the sceen is cleared to
-	void setBackgroundColour(float r, float g, float b, float a = 1.0f);
+		// enable or disable v-sync
+		void setVSync(bool enabled);
 
-	// show or hide the OS cursor
-	void setShowCursor(bool visible);
+		// sets m_gameOver to true which will close the application safely when the frame ends
+		void quit() { m_gameOver = true; }
 
-	// enable or disable v-sync
-	void setVSync(bool enabled);
+		// access to the GLFW window
+		GLFWwindow* getWindowPtr() const { return m_window; }
 
-	// sets m_gameOver to true which will close the application safely when the frame ends
-	void quit() { m_gameOver = true; }
+		// query if the window has been closed somehow
+		bool hasWindowClosed();
 
-	// access to the GLFW window
-	GLFWwindow* getWindowPtr() const { return m_window; }
+		// returns the frames-per-second that the loop is running at
+		unsigned int getFPS() const { return m_fps; }
 
-	// query if the window has been closed somehow
-	bool hasWindowClosed();
+		// returns the width / height of the game window
+		unsigned int getWindowWidth() const;
+		unsigned int getWindowHeight() const;
 
-	// returns the frames-per-second that the loop is running at
-	unsigned int getFPS() const { return m_fps; }
+		// returns time since application started
+		float getTime() const;
 
-	// returns the width / height of the game window
-	unsigned int getWindowWidth() const;
-	unsigned int getWindowHeight() const;
-	
-	// returns time since application started
-	float getTime() const;
+	protected:
 
-protected:
-	static Application* s_instance;
+		virtual bool createWindow(const char* title, int width, int height, bool fullscreen);
+		virtual void destroyWindow();
 
-	virtual bool createWindow(const char* title, int width, int height, bool fullscreen);
-	virtual void destroyWindow();
+		GLFWwindow* m_window;
 
-	GLFWwindow*		m_window;
+		// if set to false, the main game loop will exit
+		bool			m_gameOver;
 
-	// if set to false, the main game loop will exit
-	bool			m_gameOver;
-	
-	unsigned int	m_fps;
+		unsigned int	m_fps;
 
-	glm::vec2 m_mousePosition;
-	glm::vec2 m_lastMousePosition;
-
-	Camera m_camera;
-
-};
+	};
 
 } // namespace aie

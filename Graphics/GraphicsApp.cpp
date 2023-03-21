@@ -8,8 +8,7 @@
 
 #include "imgui.h"
 
-#include "Camera.h"
-#include "../dependencies/glfw/include/GLFW/glfw3.h"
+#include "SimpleCamera.h"
 
 using glm::vec3;
 using glm::vec4;
@@ -31,9 +30,6 @@ bool GraphicsApp::startup() {
 	// initialise gizmo primitive counts
 	Gizmos::create(10000, 10000, 10000, 10000);
 
-	s_instance = this;
-	glfwSetCursorPosCallback(m_window, &Application::SetMousePosition);
-
 	// create simple camera transforms
 	m_viewMatrix = glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
 	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, 16.0f / 9.0f, 0.1f, 1000.0f);
@@ -46,13 +42,12 @@ void GraphicsApp::shutdown() {
 	Gizmos::destroy();
 }
 
-bool GraphicsApp::update(float deltaTime) {
+void GraphicsApp::update(float deltaTime) {
+
+	m_camera.update(deltaTime);
 
 	// query time since application started
 	float time = getTime();
-
-	// get mouse pos
-	glm::vec2 mousepos = Application::get()->getMousePosition();
 
 	// rotate camera
 	m_viewMatrix = glm::lookAt(vec3(glm::sin(time) * 10, 10, glm::cos(time) * 10),
@@ -101,20 +96,24 @@ void GraphicsApp::draw() {
 	clearScreen();
 
 	// update perspective based on screen size
-	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, 
-		getWindowWidth() / (float)getWindowHeight(), 0.1f, 1000.0f);
+	m_projectionMatrix = m_camera.getProjectionMatrix(getWindowWidth(), getWindowHeight()); 
+	m_viewMatrix = m_camera.getViewMatrix();
+
+	// bind shader
+	m_simpleShader.bind();
 
 	// Draw the quad setup in QuadLoader()
-	auto pvm = m_projectionMatrix * m_viewMatrix * m_quadTransform;
-	//QuadDraw(pvm);
-	//BoxDraw(pvm);
+	auto pv = m_projectionMatrix * m_viewMatrix;
+	//QuadDraw(pv * m_quadTransform);
 
 	// Draw the bunny setup in BunnyLoader()
-	pvm = m_projectionMatrix * m_viewMatrix * m_bunnyTransform;
 	//BunnyDraw(pvm);
 	//PhongDraw(pvm * m_bunnyTransform, m_bunnyTransform);
 
-	//BoxDraw(pvm);
+	// bind transform
+	//m_phongShader.bindUniform("ProjectionViewModel", pv);
+
+	ObjDraw(pv, m_spearTransform, &m_spearMesh);
 
 	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
 }
@@ -144,12 +143,26 @@ void GraphicsApp::SolarSystem(float time)
 
 bool GraphicsApp::LaunchShaders()
 {
+	m_normalLitShader.loadShader(aie::eShaderStage::VERTEX,
+		"./shaders/normalLit.vert");
+	m_normalLitShader.loadShader(aie::eShaderStage::FRAGMENT,
+		"./shaders/normalLit.frag");
+
+	if (m_normalLitShader.link() == false)
+	{
+		printf("Normal Lit Phong Shader Error: %s\n", m_normalLitShader.getLastError());
+		return false;
+	}
+
 	// Used for loading in a simple quad
 	if (!QuadLoader())
 		return false;
 
 	// Used for loading in an OBJ bunny
 	if (!BunnyLoader())
+		return false;
+
+	if (!SpearLoader())
 		return false;
 
 	return true;
@@ -317,6 +330,50 @@ void GraphicsApp::BoxDraw(glm::mat4 pvm)
 	m_quadMesh.Draw();
 }
 
+bool GraphicsApp::SpearLoader()
+{
+	if (m_spearMesh.load("./soulspear/soulspear.obj", true, true) == false)
+	{
+		printf("Soulspear Mesh Error!\n");
+		return false;
+	}
+
+	m_spearTransform = {
+	1, 0, 0, 0,
+	0, 1, 0, 0,
+	0, 0, 1, 0,
+	0, 0, 0, 1
+	};
+
+	return true;
+}
+
+void GraphicsApp::ObjDraw(glm::mat4 pv, glm::mat4 transform, aie::OBJMesh* objMesh)
+{
+	m_normalLitShader.bind();
+
+	// Bind the camera position
+	m_normalLitShader.bindUniform("CameraPosition",
+		glm::vec3(glm::inverse(m_viewMatrix)[3]));
+
+	// Bind the directional light we defined
+	m_normalLitShader.bindUniform("LightDirection", m_light.direction);
+	m_normalLitShader.bindUniform("LightColor", m_light.color);
+	m_normalLitShader.bindUniform("AmbientColor", m_ambientLight);
+	m_normalLitShader.bindUniform("SpecularPower", m_specularStrength);
+
+	// Bind the texture location
+	m_normalLitShader.bindUniform("diffuseTexture", 0);
+
+	// Bind the pvm using the one provided
+	m_normalLitShader.bindUniform("ProjectionViewModel", pv * transform);
+
+	// Bind the transform using the one provided
+	m_normalLitShader.bindUniform("ModelMatrix", transform);
+
+	objMesh->draw();
+}
+
 void GraphicsApp::PhongDraw(glm::mat4 pvm, glm::mat4 transform)
 {
 	// Bind the phong shader
@@ -338,5 +395,5 @@ void GraphicsApp::PhongDraw(glm::mat4 pvm, glm::mat4 transform)
 	// Bind the transform using the one provided
 	m_phongShader.bindUniform("ModelMatrix", transform);
 
-	m_bunnyMesh.draw();
+	m_spearMesh.draw();
 }
