@@ -4,11 +4,9 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 
-#include "Planet.h"
-
 #include "imgui.h"
 
-#include "SimpleCamera.h"
+
 
 using glm::vec3;
 using glm::vec4;
@@ -34,13 +32,14 @@ bool GraphicsApp::startup() {
 	m_viewMatrix = glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
 	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, 16.0f / 9.0f, 0.1f, 1000.0f);
 
-
-
-
 	m_bunny = false;
 	m_solarsystem = false;
 	m_soulSpear = false;
 	m_plain = false;
+
+	m_stationaryCameraActive = true;
+	m_flyCameraActive = false;
+	m_orbitalCameraActive = false;
 
 	Light light;
 	light.color = { 4, 3, 5 };
@@ -48,8 +47,11 @@ bool GraphicsApp::startup() {
 	m_ambientLight = { 30.f, 30.f, 30.f };
 	m_specularStrength = 0.f;
 
-	m_scene = new Scene(&m_camera, glm::vec2(getWindowWidth(),
+	m_camera = new StationaryCamera();
+
+	m_scene = new Scene(&*m_camera, glm::vec2(getWindowWidth(),
 		getWindowHeight()), light, m_ambientLight);
+
 
 	return LaunchShaders();
 }
@@ -62,11 +64,19 @@ void GraphicsApp::shutdown() {
 
 void GraphicsApp::update(float deltaTime) {
 
-	m_camera.update(deltaTime);
+	m_camera->update(deltaTime);
 
 	// query time since application started
 	float time = getTime();
 
+	if (m_flyCameraActive && m_allowFlyCamera)
+	{
+		m_allowFlyCamera = false;
+		delete m_camera;
+		m_camera = new FlyCamera();
+		m_scene->SetCamera(m_camera);
+
+	}
 	// rotate camera
 	m_viewMatrix = glm::lookAt(vec3(glm::sin(time) * 10, 10, glm::cos(time) * 10),
 		vec3(0), vec3(0, 1, 0));
@@ -112,8 +122,8 @@ void GraphicsApp::draw() {
 	clearScreen();
 
 	// update perspective based on screen size
-	m_projectionMatrix = m_camera.getProjectionMatrix(getWindowWidth(), getWindowHeight()); 
-	m_viewMatrix = m_camera.getViewMatrix();
+	m_projectionMatrix = m_camera->getProjectionMatrix(getWindowWidth(), getWindowHeight()); 
+	m_viewMatrix = m_camera->getViewMatrix();
 
 	auto pv = m_projectionMatrix * m_viewMatrix;
 
@@ -201,7 +211,9 @@ void GraphicsApp::ImGUIRefesher()
 	ImGui::End();
 
 	ImGui::Begin("Camera Selector/Settings");
-
+	ImGui::Checkbox("StationaryCamera", &m_stationaryCameraActive);
+	ImGui::Checkbox("FlyCamera", &m_flyCameraActive);
+	ImGui::Checkbox("OrbitalCamera", &m_orbitalCameraActive);
 	ImGui::End();
 }
 

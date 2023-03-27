@@ -1,20 +1,19 @@
 #pragma once
 #include "glm/common.hpp"
 
-class SimpleCamera
+class BaseCamera
 {
 public:
-    SimpleCamera();
-    ~SimpleCamera();
+    BaseCamera();
+    ~BaseCamera();
 
-    void update(float deltaTime);
+    virtual void update(float deltaTime);
     glm::vec2 GetPosition() { return m_position; }
 
-    glm::mat4 SimpleCamera::getViewMatrix();
-    glm::mat4 SimpleCamera::getProjectionMatrix(float w, float h);
+    glm::mat4 BaseCamera::getViewMatrix();
+    glm::mat4 BaseCamera::getProjectionMatrix(float w, float h);
 
-
-private:
+protected:
     float m_theta;
     float m_phi;
     glm::vec3 m_position;

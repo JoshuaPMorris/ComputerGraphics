@@ -1,11 +1,13 @@
 #pragma once
 #include "BaseCamera.h"
-class StationaryCamera :
+
+class FlyCamera :
     public BaseCamera
 {
 public:
-    StationaryCamera();
-    ~StationaryCamera();
+    FlyCamera();
+    ~FlyCamera();
 
     void update(float deltaTime) override;
 };
+

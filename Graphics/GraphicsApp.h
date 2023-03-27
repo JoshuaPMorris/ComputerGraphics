@@ -14,7 +14,9 @@
 #include "Scene.h"
 #include "Instance.h"
 
-#include "SimpleCamera.h"
+#include "FlyCamera.h"
+#include "OribtalCamera.h"
+#include "StationaryCamera.h"
 
 class GraphicsApp : public aie::Application {
 public:
@@ -50,11 +52,19 @@ protected:
 	bool BoxLoading();
 	void BoxDraw(glm::mat4 pvm);
 
-	// Scene Selector (bools)
+	// Scene Selector
 	bool m_plain;
 	bool m_solarsystem;
 	bool m_bunny;
 	bool m_soulSpear;
+
+	// Camera Selector
+	bool m_stationaryCameraActive;
+	bool m_allowStationaryCamera;
+	bool m_flyCameraActive;
+	bool m_allowFlyCamera;
+	bool m_orbitalCameraActive;
+	bool m_allowOrbitalCamera;
 
 	Scene*				m_scene;
 
@@ -77,7 +87,10 @@ protected:
 	aie::OBJMesh		m_spearMesh;
 	glm::mat4			m_spearTransform;
 	
-	SimpleCamera m_camera;
+	BaseCamera *m_camera;
+	FlyCamera m_flyCamera;
+	OribtalCamera m_orbitalCamera;
+	StationaryCamera m_stationaryCamera;
 
 	Light m_light;
 	glm::vec3 m_ambientLight;

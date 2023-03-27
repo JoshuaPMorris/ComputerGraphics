@@ -1,7 +1,8 @@
 #include "Scene.h"
 #include "Instance.h"
+#include "BaseCamera.h"
 
-Scene::Scene(SimpleCamera* camera, glm::vec2 windowSize, 
+Scene::Scene(BaseCamera* camera, glm::vec2 windowSize, 
 	Light& light, glm::vec3 ambientLightColor) :
 	m_camera(camera), m_windowSize(windowSize), m_light(light), 
 	m_ambientLightColor(ambientLightColor)

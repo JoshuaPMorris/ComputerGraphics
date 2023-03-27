@@ -21,7 +21,7 @@ void Instance::Draw(Scene* scene)
 	auto pvm = scene->GetCamera()->getProjectionMatrix(
 		scene->GetWindowSize().x, scene->GetWindowSize().y) *
 		scene->GetCamera()->getViewMatrix() * m_transform;
-	m_shader->bindUniform("ProjectionViewMatrix", pvm);
+	m_shader->bindUniform("ProjectionViewModel", pvm);
 	m_shader->bindUniform("ModelMatrix", m_transform);
 
 	// Bind the camera position

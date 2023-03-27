@@ -3,7 +3,7 @@
 #include <vector>
 #include <list>
 
-class SimpleCamera;
+class BaseCamera;
 class Instance;
 
 struct Light
@@ -25,19 +25,21 @@ struct Light
 class Scene
 {
 public:
-	Scene(SimpleCamera* camera, glm::vec2 windowSize, 
+	Scene(BaseCamera* camera, glm::vec2 windowSize, 
 		Light& light, glm::vec3 ambientLightColor);
 	~Scene();
 	void AddInstance(Instance* instance);
 	void Draw();
 
-	SimpleCamera* GetCamera() { return m_camera; }
+	BaseCamera* GetCamera() { return m_camera; }
 	glm::vec2 GetWindowSize();
 	glm::vec3 GetAmbientLightColor() { return m_ambientLightColor; }
 	Light GetLight() { return m_light; }
 
+	BaseCamera* SetCamera(BaseCamera* camera) { return m_camera = camera; };
+
 protected:
-	SimpleCamera* m_camera;
+	BaseCamera* m_camera;
 	glm::vec2 m_windowSize;
 	Light m_light;
 	glm::vec3 m_ambientLightColor;
