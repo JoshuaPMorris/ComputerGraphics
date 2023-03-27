@@ -37,10 +37,6 @@ bool GraphicsApp::startup() {
 	m_soulSpear = false;
 	m_plain = false;
 
-	m_stationaryCameraActive = true;
-	m_flyCameraActive = false;
-	m_orbitalCameraActive = false;
-
 	Light light;
 	light.color = { 4, 3, 5 };
 	light.direction = { 1, -1, 1 };
@@ -69,14 +65,6 @@ void GraphicsApp::update(float deltaTime) {
 	// query time since application started
 	float time = getTime();
 
-	if (m_flyCameraActive && m_allowFlyCamera)
-	{
-		m_allowFlyCamera = false;
-		delete m_camera;
-		m_camera = new FlyCamera();
-		m_scene->SetCamera(m_camera);
-
-	}
 	// rotate camera
 	m_viewMatrix = glm::lookAt(vec3(glm::sin(time) * 10, 10, glm::cos(time) * 10),
 		vec3(0), vec3(0, 1, 0));
@@ -117,6 +105,9 @@ void GraphicsApp::update(float deltaTime) {
 }
 
 void GraphicsApp::draw() {
+	// Bind the render target as the first 
+	// part of our draw function
+	m_renderTarget.bind();
 
 	// wipe the screen to the background colour
 	clearScreen();
@@ -129,12 +120,24 @@ void GraphicsApp::draw() {
 
 	m_scene->Draw();
 
-	//if (m_soulSpear) ObjDraw(pv, m_spearTransform, &m_spearMesh);
-	//if (m_bunny) ObjDraw(pv, m_bunnyTransform, &m_bunnyMesh);
-	
-	//if (m_plain) ObjDraw(pv, m_quadTransform, &m_quadMesh);
-
 	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
+
+	// Unbind the target to return to the backbuffer
+	m_renderTarget.unbind();
+
+	clearScreen();
+
+	// Draw the quad setup in QuadLoader()
+	//QuadDraw(pv * m_quadTransform);
+
+	// Bind the post process shader and the texture
+	m_postProcessShader.bind();
+	m_postProcessShader.bindUniform("colorTarget", 0);
+	m_postProcessShader.bindUniform("postProcessTarget", m_postProcessEffect);
+	m_renderTarget.getTarget(0).bind(0);
+
+	m_fullScreenQuad.Draw();
+
 }
 
 void GraphicsApp::SolarSystem(float time)
@@ -162,6 +165,16 @@ void GraphicsApp::SolarSystem(float time)
 
 bool GraphicsApp::LaunchShaders()
 {
+	if (m_renderTarget.initialise(1, getWindowWidth(),
+		getWindowHeight()) == false)
+	{
+		printf("Render Target Error!\n");
+		return false;
+	}
+
+
+#pragma region LoadingShaders
+	// Textured Mesh Shader
 	m_normalLitShader.loadShader(aie::eShaderStage::VERTEX,
 		"./shaders/normalLit.vert");
 	m_normalLitShader.loadShader(aie::eShaderStage::FRAGMENT,
@@ -173,9 +186,26 @@ bool GraphicsApp::LaunchShaders()
 		return false;
 	}
 
-	// Used for loading in a simple quad
-	if (!QuadLoader())
+	// Post Processing Shader
+	m_postProcessShader.loadShader(aie::eShaderStage::VERTEX,
+		"./shaders/post.vert");
+	m_postProcessShader.loadShader(aie::eShaderStage::FRAGMENT,
+		"./shaders/post.frag");
+
+	if (m_postProcessShader.link() == false)
+	{
+		printf("Post Process Shader Error: %s\n", m_normalLitShader.getLastError());
 		return false;
+	}
+#pragma endregion
+
+	// Used for loading in a simple quad
+	/*if (!QuadLoader())
+		return false;*/
+
+	// Create a full screen quad
+	m_fullScreenQuad.InitialiseFullScreenQuad();
+
 
 	// Used for loading in an OBJ bunny
 	if (!BunnyLoader())
@@ -184,7 +214,7 @@ bool GraphicsApp::LaunchShaders()
 	if (!SpearLoader())
 		return false;
 
-	m_scene->AddInstance(new Instance(m_spearTransform, 
+	m_scene->AddInstance(new Instance(m_spearTransform,
 		&m_spearMesh, &m_normalLitShader));
 
 	return true;
@@ -211,23 +241,56 @@ void GraphicsApp::ImGUIRefesher()
 	ImGui::End();
 
 	ImGui::Begin("Camera Selector/Settings");
-	ImGui::Checkbox("StationaryCamera", &m_stationaryCameraActive);
-	ImGui::Checkbox("FlyCamera", &m_flyCameraActive);
-	ImGui::Checkbox("OrbitalCamera", &m_orbitalCameraActive);
+	if (ImGui::Button("StationaryCamera"))
+	{
+		delete m_camera;
+		m_camera = new StationaryCamera();
+		m_scene->SetCamera(m_camera);
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("FlyCamera"))
+	{
+		delete m_camera;
+		m_camera = new FlyCamera();
+		m_scene->SetCamera(m_camera);
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("OrbitalCamera"))
+	{
+
+	}
+	if (ImGui::Button("StationaryCamera X-Axis"))
+	{
+		delete m_camera;
+		m_camera = new StationaryCamera(true, false, false);
+		m_scene->SetCamera(m_camera);
+	}
+	if (ImGui::Button("StationaryCamera Y-Axis"))
+	{
+		delete m_camera;
+		m_camera = new StationaryCamera(false, true, false);
+		m_scene->SetCamera(m_camera);
+	}
+	if (ImGui::Button("StationaryCamera Z-Axis"))
+	{
+		delete m_camera;
+		m_camera = new StationaryCamera(false, false, true);
+		m_scene->SetCamera(m_camera);
+	}
 	ImGui::End();
 }
 
 bool GraphicsApp::QuadLoader()
 {
-	m_simpleShader.loadShader(aie::eShaderStage::VERTEX,
-		"./shaders/simple.vert");
-	m_simpleShader.loadShader(aie::eShaderStage::FRAGMENT,
-		"./shaders/simple.frag");
+	m_texturedShader.loadShader(aie::eShaderStage::VERTEX,
+		"./shaders/textured.vert");
+	m_texturedShader.loadShader(aie::eShaderStage::FRAGMENT,
+		"./shaders/textured.frag");
 
-	if (m_simpleShader.link() == false)
+	if (m_texturedShader.link() == false)
 	{
 		printf("Simple Shader has an Error %s|\n",
-			m_simpleShader.getLastError());
+			m_texturedShader.getLastError());
 		return false;
 	}
 
@@ -238,9 +301,10 @@ bool GraphicsApp::QuadLoader()
 	vertices[2].position = { -0.5f, 0, -0.5f, 1 };
 	vertices[3].position = { 0.5f, 0, -0.5f, 1 };
 
-	unsigned int indices[6] = { 0, 1, 2, 2, 1, 3 };
+	unsigned int indices[6] = { 0, 2, 1, 1, 2, 3 };
 
 	m_quadMesh.Initialise(4, vertices, 6, indices);
+	//m_quadMesh.InitialiseQuad();
 
 	// This is a 10 'unit' wide quad
 	m_quadTransform = {
@@ -256,10 +320,14 @@ bool GraphicsApp::QuadLoader()
 void GraphicsApp::QuadDraw(glm::mat4 pvm)
 {
 	// Bind the shader
-	m_simpleShader.bind();
+	m_texturedShader.bind();
 
 	// Bind the transform
-	m_simpleShader.bindUniform("ProjectionViewModel", pvm);
+	m_texturedShader.bindUniform("ProjectionViewModel", pvm);
+
+	m_texturedShader.bindUniform("diffuseTexture", 0);
+
+	m_renderTarget.getTarget(0).bind(0);
 
 	// Draw the quad using Mesh's draw
 	m_quadMesh.Draw();

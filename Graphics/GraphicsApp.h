@@ -13,6 +13,7 @@
 
 #include "Scene.h"
 #include "Instance.h"
+#include "RenderTarget.h"
 
 #include "FlyCamera.h"
 #include "OribtalCamera.h"
@@ -49,6 +50,8 @@ protected:
 
 	void PhongDraw(glm::mat4 pvm, glm::mat4 transform, float time);
 
+	int m_postProcessEffect = -1;
+
 	bool BoxLoading();
 	void BoxDraw(glm::mat4 pvm);
 
@@ -57,14 +60,6 @@ protected:
 	bool m_solarsystem;
 	bool m_bunny;
 	bool m_soulSpear;
-
-	// Camera Selector
-	bool m_stationaryCameraActive;
-	bool m_allowStationaryCamera;
-	bool m_flyCameraActive;
-	bool m_allowFlyCamera;
-	bool m_orbitalCameraActive;
-	bool m_allowOrbitalCamera;
 
 	Scene*				m_scene;
 
@@ -77,8 +72,12 @@ protected:
 	aie::ShaderProgram	m_phongShader;
 	aie::ShaderProgram	m_texturedShader;
 	aie::ShaderProgram  m_normalLitShader;
+	aie::ShaderProgram  m_postProcessShader;
+
+	aie::RenderTarget	m_renderTarget;
 
 	Mesh				m_quadMesh;
+	Mesh				m_fullScreenQuad;
 	glm::mat4			m_quadTransform;
 
 	aie::OBJMesh		m_bunnyMesh;
