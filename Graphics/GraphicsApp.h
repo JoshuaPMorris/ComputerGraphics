@@ -50,7 +50,7 @@ protected:
 
 	void PhongDraw(glm::mat4 pvm, glm::mat4 transform, float time);
 
-	int m_postProcessEffect = -1;
+	int m_postProcessEffect = 1;
 
 	bool BoxLoading();
 	void BoxDraw(glm::mat4 pvm);

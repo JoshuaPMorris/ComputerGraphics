@@ -30,6 +30,17 @@ vec4 BoxBlur(vec2 texCoord) {
     return color / 9;
 }
 
+vec4 Distort(vec2 texCoord)
+{
+    vec2 mid = vec2(0.5f);
+    float distanceFromTheCenter = distance(texCoord, mid);
+    vec2 normalizeCoord = normalize(texCoord - mid);
+    float bias = distanceFromTheCenter + 
+        sin(distanceFromTheCenter * 15) * 0.05f;
+    vec2 newCoord = mid + bias * normalizeCoord;
+    return texture(colorTarget, newCoord);
+}
+
 void main() {
     // this will calculate the texel size
     vec2 texSize = textureSize(colorTarget, 0);
@@ -53,7 +64,7 @@ void main() {
         }
         case 1: // Distort
         {
-            FragColor = Default(texCoord);
+            FragColor = Distort(texCoord);
             break;
         }
         case 2: // Edge Detection
