@@ -5,7 +5,7 @@ class StationaryCamera :
 {
 public:
     StationaryCamera();
-    StationaryCamera(bool xAxis, bool yAxis, bool zAxis);
+    StationaryCamera(bool xAxis, bool yAxis, bool zAxis, glm::vec3 pos);
     ~StationaryCamera();
 
     void update(float deltaTime) override;

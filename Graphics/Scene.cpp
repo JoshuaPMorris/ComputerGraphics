@@ -1,5 +1,6 @@
 #include "Scene.h"
 #include "Instance.h"
+
 #include "BaseCamera.h"
 
 Scene::Scene(BaseCamera* camera, glm::vec2 windowSize, 
@@ -25,6 +26,12 @@ void Scene::AddInstance(Instance* instance)
 
 void Scene::Draw()
 {
+	for (int i = 0; i < MAX_LIGHTS && i < m_pointLights.size(); i++)
+	{
+		m_pointLightPositions[i] = m_pointLights[i].direction;
+		m_pointLightColors[i] = m_pointLights[i].color;
+	}
+
 	for (auto it = m_instances.begin(); 
 		it != m_instances.end(); it++)
 	{

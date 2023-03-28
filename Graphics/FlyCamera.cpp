@@ -3,11 +3,15 @@
 #include <glm/detail/func_trigonometric.hpp>
 #include <iostream>
 
-FlyCamera::FlyCamera()
+FlyCamera::FlyCamera() 
 {
-    m_theta = 0;
-    m_phi = 0;
-    m_position = glm::vec3(-10, 2, 0);
+}
+
+FlyCamera::FlyCamera(glm::vec3 pos, float theta, float phi)
+{
+    m_theta = theta;
+    m_phi = phi;
+    m_position = pos;
 }
 
 FlyCamera::~FlyCamera()
@@ -19,11 +23,6 @@ void FlyCamera::update(float deltaTime)
     aie::Input* input = aie::Input::getInstance();
     float thetaR = glm::radians(m_theta);
     float phiR = glm::radians(m_phi);
-
-    /*std::cout << "Phi: \n" << m_phi;
-    std::cout << "Theta: \n" << m_theta;*/
-
-    //std::cout << "Pos: " << m_position.y;
 
     //calculate the forwards and right axes and up axis for the camera
     glm::vec3 forward(cos(phiR) * cos(thetaR), sin(phiR), cos(phiR) * sin(thetaR));

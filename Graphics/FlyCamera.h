@@ -6,6 +6,7 @@ class FlyCamera :
 {
 public:
     FlyCamera();
+    FlyCamera(glm::vec3 pos, float theta, float phi);
     ~FlyCamera();
 
     void update(float deltaTime) override;

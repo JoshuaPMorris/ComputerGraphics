@@ -15,9 +15,15 @@ class Instance
 public:
 	Instance(glm::mat4 transform, aie::OBJMesh* mesh,
 		aie::ShaderProgram* shader);
+	Instance(glm::vec3 position,
+		glm::vec3 eularAngles, glm::vec3 scale,
+		aie::OBJMesh* mesh, aie::ShaderProgram* shader);
 	~Instance() {}
 
 	void Draw(Scene* scene);
+
+	static glm::mat4 MakeTransform(glm::vec3 position,
+		glm::vec3 eularAngles, glm::vec3 scale);
 
 protected:
 	glm::mat4 m_transform;

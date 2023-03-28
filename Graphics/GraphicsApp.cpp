@@ -32,22 +32,41 @@ bool GraphicsApp::startup() {
 	m_viewMatrix = glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
 	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, 16.0f / 9.0f, 0.1f, 1000.0f);
 
-	m_bunny = false;
+	m_bunny =		false;
 	m_solarsystem = false;
-	m_soulSpear = false;
-	m_plain = false;
+	m_soulSpear =	false;
+	m_plain =		false;
 
 	Light light;
-	light.color = { 4, 3, 5 };
-	light.direction = { 1, -1, 1 };
-	m_ambientLight = { 30.f, 30.f, 30.f };
-	m_specularStrength = 0.f;
+	light.color =			{ 4, 3, 5 };
+	light.direction =		{ 1, -1, 1 };
+	m_ambientLight =		{ 30.f, 30.f, 30.f };
+	m_specularStrength =	0.f;
+	m_postProcessEffect =	0;
+
+	m_emitter = new ParticleEmitter();
+	m_emitter->Initialise(1000, 500, .1f, 1.0f, 
+		1, 5, 1, .1f, glm::vec4(0, 0, 1, 1), glm::vec4(0, 1, 0, 1));
+
+	m_stationaryXPos =	glm::vec3(-10, 2,  0);
+	m_stationaryYPos =	glm::vec3( 0,  12, 0);
+	m_stationaryZPos =	glm::vec3( 0,  2,  10);
+	m_flyPos =			glm::vec3(-10, 2,  0);
+	m_flyTheta = 0;
+	m_flyPhi = 0;
+
+	m_stCamX = true;
+	m_stCamY = false;
+	m_stCamZ = false;
+	m_flyCam = false;
 
 	m_camera = new StationaryCamera();
 
 	m_scene = new Scene(&*m_camera, glm::vec2(getWindowWidth(),
 		getWindowHeight()), light, m_ambientLight);
 
+	m_scene->AddPointLights(glm::vec3(5, 3, 0), glm::vec3(1, 0, 0), 50);
+	m_scene->AddPointLights(glm::vec3(-5, 3, 0), glm::vec3(0, 0, 1), 50);
 
 	return LaunchShaders();
 }
@@ -61,6 +80,24 @@ void GraphicsApp::shutdown() {
 void GraphicsApp::update(float deltaTime) {
 
 	m_camera->update(deltaTime);
+
+	if (m_postProcessEffect > 10)
+		m_postProcessEffect = 0;
+	if (m_postProcessEffect < 0)
+		m_postProcessEffect = 10;
+
+	if (m_stCamX)
+		m_stationaryXPos =	m_camera->GetPosition();
+	if (m_stCamY)
+		m_stationaryYPos =	m_camera->GetPosition();
+	if (m_stCamZ)
+		m_stationaryZPos =	m_camera->GetPosition();
+	if (m_flyCam)
+	{
+		m_flyPos =			m_camera->GetPosition();
+		m_flyTheta =		m_camera->GetTheta();
+		m_flyPhi =			m_camera->GetPhi();
+	}
 
 	// query time since application started
 	float time = getTime();
@@ -97,11 +134,17 @@ void GraphicsApp::update(float deltaTime) {
 	m_light.direction = 
 		glm::normalize(glm::vec3(glm::cos(time * 2), glm::sin(time * 2), 0));
 
-
 	ImGUIRefesher();
 
 	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
 		quit();
+
+
+
+	m_emitter->Update(deltaTime, m_scene->GetCamera()->GetTransform(
+		m_camera->GetPosition(), glm::vec3(0), glm::vec3(1)));
+
+
 }
 
 void GraphicsApp::draw() {
@@ -120,6 +163,10 @@ void GraphicsApp::draw() {
 
 	m_scene->Draw();
 
+	m_particleShader.bind();
+	m_particleShader.bindUniform("ProjectionViewModel", pv * m_particleEmitTransform);
+	m_emitter->Draw();
+
 	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
 
 	// Unbind the target to return to the backbuffer
@@ -128,12 +175,20 @@ void GraphicsApp::draw() {
 	clearScreen();
 
 	// Draw the quad setup in QuadLoader()
-	//QuadDraw(pv * m_quadTransform);
+	// QuadDraw(pv * m_quadTransform);
+
+	aie::Gizmos::addCylinderFilled(m_stationaryXPos, 10, 10, 10, glm::vec4(250, 255, 0, 0.5));
+	aie::Gizmos::addCylinderFilled(m_stationaryYPos, 10, 10, 10, glm::vec4(250, 255, 0, 0.5));
+	aie::Gizmos::addCylinderFilled(m_stationaryZPos, 10, 10, 10, glm::vec4(250, 255, 0, 0.5));
+	aie::Gizmos::addCylinderFilled(m_flyPos,		 10, 10, 10, glm::vec4(250, 255, 0, 0.5));
 
 	// Bind the post process shader and the texture
 	m_postProcessShader.bind();
 	m_postProcessShader.bindUniform("colorTarget", 0);
 	m_postProcessShader.bindUniform("postProcessTarget", m_postProcessEffect);
+	m_postProcessShader.bindUniform("windowWidth", (int)getWindowWidth());
+	m_postProcessShader.bindUniform("windowHeight", (int)getWindowHeight());
+	m_postProcessShader.bindUniform("iTime", getTime());
 	m_renderTarget.getTarget(0).bind(0);
 
 	m_fullScreenQuad.Draw();
@@ -186,6 +241,8 @@ bool GraphicsApp::LaunchShaders()
 		return false;
 	}
 
+	// phong is untextured
+
 	// Post Processing Shader
 	m_postProcessShader.loadShader(aie::eShaderStage::VERTEX,
 		"./shaders/post.vert");
@@ -194,10 +251,29 @@ bool GraphicsApp::LaunchShaders()
 
 	if (m_postProcessShader.link() == false)
 	{
-		printf("Post Process Shader Error: %s\n", m_normalLitShader.getLastError());
+		printf("Post Process Shader Error: %s\n", m_postProcessShader.getLastError());
+		return false;
+	}
+
+	// Particle Shader
+	m_particleShader.loadShader(aie::eShaderStage::VERTEX,
+		"./shaders/particle.vert");
+	m_particleShader.loadShader(aie::eShaderStage::FRAGMENT,
+		"./shaders/particle.frag");
+
+	if (m_particleShader.link() == false)
+	{
+		printf("Particle Shader Error : % s\n", m_particleShader.getLastError());
 		return false;
 	}
 #pragma endregion
+
+	m_particleEmitTransform = {
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1
+	};
 
 	// Used for loading in a simple quad
 	/*if (!QuadLoader())
@@ -214,8 +290,15 @@ bool GraphicsApp::LaunchShaders()
 	if (!SpearLoader())
 		return false;
 
-	m_scene->AddInstance(new Instance(m_spearTransform,
-		&m_spearMesh, &m_normalLitShader));
+	//m_scene->AddInstance(new Instance(m_spearTransform,
+	//	&m_spearMesh, &m_normalLitShader));
+
+	for (int i = 0; i < 10; i++)
+	{
+		m_scene->AddInstance(new Instance(glm::vec3(i * 2, 0, 0),
+			glm::vec3(0, i * 30, 0), glm::vec3(1, 1, 1),
+			&m_spearMesh, &m_normalLitShader));
+	}
 
 	return true;
 }
@@ -233,6 +316,11 @@ void GraphicsApp::ImGUIRefesher()
 		&m_specularStrength, 1, 0, 100);
 	ImGui::End();
 
+	ImGui::Begin("ShaderEffects");
+	ImGui::InputInt("Post Process Effect", 
+		&m_postProcessEffect, 1, 2);
+	ImGui::End();
+
 	ImGui::Begin("Mesh Selector");
 	ImGui::Checkbox("Solar System", &m_solarsystem);
 	ImGui::Checkbox("Bunny", &m_bunny);
@@ -243,6 +331,7 @@ void GraphicsApp::ImGUIRefesher()
 	ImGui::Begin("Camera Selector/Settings");
 	if (ImGui::Button("StationaryCamera"))
 	{
+		m_camera->GetPosition();
 		delete m_camera;
 		m_camera = new StationaryCamera();
 		m_scene->SetCamera(m_camera);
@@ -251,8 +340,12 @@ void GraphicsApp::ImGUIRefesher()
 	if (ImGui::Button("FlyCamera"))
 	{
 		delete m_camera;
-		m_camera = new FlyCamera();
+		m_camera = new FlyCamera(m_flyPos, m_flyTheta, m_flyPhi);
 		m_scene->SetCamera(m_camera);
+		m_flyCam = true;
+		m_stCamX = false;
+		m_stCamY = false;
+		m_stCamZ = false;
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("OrbitalCamera"))
@@ -262,20 +355,32 @@ void GraphicsApp::ImGUIRefesher()
 	if (ImGui::Button("StationaryCamera X-Axis"))
 	{
 		delete m_camera;
-		m_camera = new StationaryCamera(true, false, false);
+		m_camera = new StationaryCamera(true, false, false, m_stationaryXPos);
 		m_scene->SetCamera(m_camera);
+		m_flyCam = false;
+		m_stCamX = true;
+		m_stCamY = false;
+		m_stCamZ = false;
 	}
 	if (ImGui::Button("StationaryCamera Y-Axis"))
 	{
 		delete m_camera;
-		m_camera = new StationaryCamera(false, true, false);
+		m_camera = new StationaryCamera(false, true, false, m_stationaryYPos);
 		m_scene->SetCamera(m_camera);
+		m_flyCam = false;
+		m_stCamX = false;
+		m_stCamY = true;
+		m_stCamZ = false;
 	}
 	if (ImGui::Button("StationaryCamera Z-Axis"))
 	{
 		delete m_camera;
-		m_camera = new StationaryCamera(false, false, true);
+		m_camera = new StationaryCamera(false, false, true, m_stationaryZPos);
 		m_scene->SetCamera(m_camera);
+		m_flyCam = false;
+		m_stCamX = false;
+		m_stCamY = false;
+		m_stCamZ = true;
 	}
 	ImGui::End();
 }
