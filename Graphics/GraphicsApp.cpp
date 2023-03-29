@@ -37,7 +37,8 @@ bool GraphicsApp::startup() {
 	m_soulSpear =	false;
 	m_plain =		false;
 
-
+	m_sunLightColor = glm::vec3(0, 0, 1);
+	m_linearLightColor = glm::vec3(1, 0, 0);
 
 	Light light;
 	light.color =			{ 4, 3, 5 };
@@ -69,8 +70,11 @@ bool GraphicsApp::startup() {
 	m_scene = new Scene(&*m_camera, glm::vec2(getWindowWidth(),
 		getWindowHeight()), light, m_ambientLight);
 
-	m_scene->AddPointLights(glm::vec3(5, 3, 0), glm::vec3(1, 0, 0), 50);
-	m_scene->AddPointLights(glm::vec3(-5, 3, 0), glm::vec3(0, 0, 1), 50);
+	m_scene->AddPointLights(glm::vec3(-5, 3, 0), m_sunLightColor, 50);
+	m_scene->AddPointLights(glm::vec3(5, 3, 0), m_linearLightColor, 50);
+
+	m_sunLight = &m_scene->GetPointLights()[0];
+	m_linearLight = &m_scene->GetPointLights()[1];
 
 	return LaunchShaders();
 }
@@ -104,6 +108,12 @@ void GraphicsApp::update(float deltaTime) {
 		m_flyPhi = m_camera->GetPhi();
 	}
 #pragma endregion
+
+#pragma region LightVariables
+	m_sunLight->color = m_sunLightColor;
+	m_linearLight->color = m_linearLightColor;
+#pragma endregion
+
 
 	// query time since application started
 	float time = getTime();
@@ -429,12 +439,16 @@ void GraphicsApp::ImGUIRefesher()
 
 #pragma region LightSettings
 	ImGui::Begin("Light Settings");
+	ImGui::DragFloat3("SunLightColor",
+		&m_sunLightColor[0], 0.1, 0, 255);
+	ImGui::DragFloat3("LinearLightColor",
+		&m_linearLightColor[0], 0.1, 0, 255);
 	// Light color
 	// Light position (x, y, z)
 	// Light rotational speed
 	// Sphere to see where the lights are (easy)
 	// Turn lights on and off
-	// Overall, 3 lights
+	// Overall, 2 lights
 	ImGui::End();
 #pragma endregion
 

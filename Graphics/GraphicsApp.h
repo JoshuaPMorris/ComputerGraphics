@@ -61,6 +61,10 @@ protected:
 	bool BoxLoading();
 	void BoxDraw(glm::mat4 pvm);
 
+	// Light values
+	glm::vec3 m_linearLightColor;
+	glm::vec3 m_sunLightColor;
+
 	// Camera Positions
 	glm::vec3 m_stationaryXPos;
 	glm::vec3 m_stationaryYPos;
@@ -112,6 +116,9 @@ protected:
 	FlyCamera			m_flyCamera;
 	OribtalCamera		m_orbitalCamera;
 	StationaryCamera	m_stationaryCamera;
+
+	Light*				m_sunLight;
+	Light*				m_linearLight;
 
 	Light				m_light;
 	glm::vec3			m_ambientLight;
