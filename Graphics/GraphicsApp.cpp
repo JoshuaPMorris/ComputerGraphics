@@ -37,6 +37,8 @@ bool GraphicsApp::startup() {
 	m_soulSpear =	false;
 	m_plain =		false;
 
+
+
 	Light light;
 	light.color =			{ 4, 3, 5 };
 	light.direction =		{ 1, -1, 1 };
@@ -48,10 +50,11 @@ bool GraphicsApp::startup() {
 	m_emitter->Initialise(1000, 500, .1f, 1.0f, 
 		1, 5, 1, .1f, glm::vec4(0, 0, 1, 1), glm::vec4(0, 1, 0, 1));
 
-	m_stationaryXPos =	glm::vec3(-10, 2,  0);
-	m_stationaryYPos =	glm::vec3( 0,  12, 0);
-	m_stationaryZPos =	glm::vec3( 0,  2,  10);
-	m_flyPos =			glm::vec3(-10, 2,  0);
+#pragma region PresetCamPositions
+	m_stationaryXPos = glm::vec3(-10, 2, 0);
+	m_stationaryYPos = glm::vec3(0, 12, 0);
+	m_stationaryZPos = glm::vec3(0, 2, 10);
+	m_flyPos = glm::vec3(-10, 2, 0);
 	m_flyTheta = 0;
 	m_flyPhi = 0;
 
@@ -59,6 +62,7 @@ bool GraphicsApp::startup() {
 	m_stCamY = false;
 	m_stCamZ = false;
 	m_flyCam = false;
+#pragma endregion
 
 	m_camera = new StationaryCamera();
 
@@ -86,18 +90,20 @@ void GraphicsApp::update(float deltaTime) {
 	if (m_postProcessEffect < 0)
 		m_postProcessEffect = 10;
 
+#pragma region CameraPositions
 	if (m_stCamX)
-		m_stationaryXPos =	m_camera->GetPosition();
+		m_stationaryXPos = m_camera->GetPosition();
 	if (m_stCamY)
-		m_stationaryYPos =	m_camera->GetPosition();
+		m_stationaryYPos = m_camera->GetPosition();
 	if (m_stCamZ)
-		m_stationaryZPos =	m_camera->GetPosition();
+		m_stationaryZPos = m_camera->GetPosition();
 	if (m_flyCam)
 	{
-		m_flyPos =			m_camera->GetPosition();
-		m_flyTheta =		m_camera->GetTheta();
-		m_flyPhi =			m_camera->GetPhi();
+		m_flyPos = m_camera->GetPosition();
+		m_flyTheta = m_camera->GetTheta();
+		m_flyPhi = m_camera->GetPhi();
 	}
+#pragma endregion
 
 	// query time since application started
 	float time = getTime();
@@ -126,6 +132,33 @@ void GraphicsApp::update(float deltaTime) {
 	
 	if (m_solarsystem) SolarSystem(time);
 
+#pragma region CameraCylinders
+	if (m_flyCam)
+	{
+		aie::Gizmos::addCylinderFilled(m_stationaryXPos, 0.5, 1, 10, glm::vec4(8, 126, 139, 0.5));
+		aie::Gizmos::addCylinderFilled(m_stationaryYPos, 0.5, 1, 10, glm::vec4(255, 90, 95, 0.5));
+		aie::Gizmos::addCylinderFilled(m_stationaryZPos, 0.5, 1, 10, glm::vec4(49, 203, 0, 0.5));
+	}
+	else if (m_stCamX)
+	{
+		aie::Gizmos::addCylinderFilled(m_flyPos,		 0.5, 1, 10, glm::vec4(165, 148, 249, 0.5));
+		aie::Gizmos::addCylinderFilled(m_stationaryYPos, 0.5, 1, 10, glm::vec4(255, 90, 95, 0.5));
+		aie::Gizmos::addCylinderFilled(m_stationaryZPos, 0.5, 1, 10, glm::vec4(49, 203, 0, 0.5));
+	}
+	else if (m_stCamY)
+	{
+		aie::Gizmos::addCylinderFilled(m_flyPos,		 0.5, 1, 10, glm::vec4(165, 148, 249, 0.5));
+		aie::Gizmos::addCylinderFilled(m_stationaryXPos, 0.5, 1, 10, glm::vec4(8, 126, 0, 0.5));
+		aie::Gizmos::addCylinderFilled(m_stationaryZPos, 0.5, 1, 10, glm::vec4(49, 203, 0, 0.5));
+	}
+	else if (m_stCamZ)
+	{
+		aie::Gizmos::addCylinderFilled(m_flyPos, 0.5, 1, 10, glm::vec4(165, 148, 249, 0.5));
+		aie::Gizmos::addCylinderFilled(m_stationaryXPos, 0.5, 1, 10, glm::vec4(8, 126, 139, 0.5));
+		aie::Gizmos::addCylinderFilled(m_stationaryYPos, 0.5, 1, 10, glm::vec4(255, 90, 95, 0.5));
+	}
+#pragma endregion
+
 	// quit if we press escape
 	aie::Input* input = aie::Input::getInstance();
 
@@ -143,8 +176,6 @@ void GraphicsApp::update(float deltaTime) {
 
 	m_emitter->Update(deltaTime, m_scene->GetCamera()->GetTransform(
 		m_camera->GetPosition(), glm::vec3(0), glm::vec3(1)));
-
-
 }
 
 void GraphicsApp::draw() {
@@ -177,10 +208,7 @@ void GraphicsApp::draw() {
 	// Draw the quad setup in QuadLoader()
 	// QuadDraw(pv * m_quadTransform);
 
-	aie::Gizmos::addCylinderFilled(m_stationaryXPos, 10, 10, 10, glm::vec4(250, 255, 0, 0.5));
-	aie::Gizmos::addCylinderFilled(m_stationaryYPos, 10, 10, 10, glm::vec4(250, 255, 0, 0.5));
-	aie::Gizmos::addCylinderFilled(m_stationaryZPos, 10, 10, 10, glm::vec4(250, 255, 0, 0.5));
-	aie::Gizmos::addCylinderFilled(m_flyPos,		 10, 10, 10, glm::vec4(250, 255, 0, 0.5));
+
 
 	// Bind the post process shader and the texture
 	m_postProcessShader.bind();
@@ -197,6 +225,7 @@ void GraphicsApp::draw() {
 
 void GraphicsApp::SolarSystem(float time)
 {
+	// Creates a solar system of planets from class Planet
 	Planet* sun = new Planet(vec3(0), 0, time, 1, 0, false, 0, vec4(250, 255, 0, 0.5));
 	Planet* mercury = new Planet(vec3(1.75, 0, 1.75), 4.787f, time, 0.15, 0, false, 0, vec4(189, 205, 214, 0.5));
 	Planet* venus = new Planet(vec3(3, 0, 3), 3.502f, time, 0.3, 0, false, 0, vec4(255, 139, 19, 0.5));
@@ -241,7 +270,17 @@ bool GraphicsApp::LaunchShaders()
 		return false;
 	}
 
-	// phong is untextured
+	// Untextured Mesh Shader
+	m_phongShader.loadShader(aie::eShaderStage::VERTEX,
+		"./shaders/phong.vert");
+	m_phongShader.loadShader(aie::eShaderStage::FRAGMENT,
+		"./shaders/phong.frag");
+
+	if (m_phongShader.link() == false)
+	{
+		printf("Phong Shader Error: %s\n", m_phongShader.getLastError());
+		return false;
+	}
 
 	// Post Processing Shader
 	m_postProcessShader.loadShader(aie::eShaderStage::VERTEX,
@@ -275,10 +314,6 @@ bool GraphicsApp::LaunchShaders()
 		0, 0, 0, 1
 	};
 
-	// Used for loading in a simple quad
-	/*if (!QuadLoader())
-		return false;*/
-
 	// Create a full screen quad
 	m_fullScreenQuad.InitialiseFullScreenQuad();
 
@@ -287,47 +322,54 @@ bool GraphicsApp::LaunchShaders()
 	if (!BunnyLoader())
 		return false;
 
+	// Used for loading in a spear
 	if (!SpearLoader())
 		return false;
 
-	//m_scene->AddInstance(new Instance(m_spearTransform,
-	//	&m_spearMesh, &m_normalLitShader));
-
+#pragma region CreateObjects
 	for (int i = 0; i < 10; i++)
 	{
 		m_scene->AddInstance(new Instance(glm::vec3(i * 2, 0, 0),
 			glm::vec3(0, i * 30, 0), glm::vec3(1, 1, 1),
 			&m_spearMesh, &m_normalLitShader));
 	}
+#pragma endregion
 
 	return true;
 }
 
 void GraphicsApp::ImGUIRefesher()
 {
-	ImGui::Begin("Light Settings");
-	ImGui::DragFloat3("Global Light Color", 
+#pragma region MeshLightSettings
+	ImGui::Begin("Mesh Light Settings");
+	ImGui::DragFloat3("Global Light Color",
 		&m_light.color[0], 0.1, 0, 100);
-	ImGui::DragFloat3("Global Light Direction", 
+	ImGui::DragFloat3("Global Light Direction",
 		&m_light.direction[0], 0.1, -1, 100);
 	ImGui::DragFloat3("Ambient Light",
 		&m_ambientLight[0], 0.1, 0, 100);
 	ImGui::DragFloat("Specular Strength",
 		&m_specularStrength, 1, 0, 100);
 	ImGui::End();
+#pragma endregion
 
+#pragma region ShaderEffects
 	ImGui::Begin("ShaderEffects");
-	ImGui::InputInt("Post Process Effect", 
+	ImGui::InputInt("Post Process Effect",
 		&m_postProcessEffect, 1, 2);
 	ImGui::End();
+#pragma endregion
 
+#pragma region MeshSelector
 	ImGui::Begin("Mesh Selector");
 	ImGui::Checkbox("Solar System", &m_solarsystem);
 	ImGui::Checkbox("Bunny", &m_bunny);
 	ImGui::Checkbox("Soul Spear", &m_soulSpear);
 	ImGui::Checkbox("Plain", &m_plain);
 	ImGui::End();
+#pragma endregion
 
+#pragma region CameraSelector
 	ImGui::Begin("Camera Selector/Settings");
 	if (ImGui::Button("StationaryCamera"))
 	{
@@ -383,6 +425,19 @@ void GraphicsApp::ImGUIRefesher()
 		m_stCamZ = true;
 	}
 	ImGui::End();
+#pragma endregion
+
+#pragma region LightSettings
+	ImGui::Begin("Light Settings");
+	// Light color
+	// Light position (x, y, z)
+	// Light rotational speed
+	// Sphere to see where the lights are (easy)
+	// Turn lights on and off
+	// Overall, 3 lights
+	ImGui::End();
+#pragma endregion
+
 }
 
 bool GraphicsApp::QuadLoader()

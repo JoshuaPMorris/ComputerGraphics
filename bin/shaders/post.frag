@@ -162,10 +162,6 @@ vec4 DepthOfField( vec2 texCoord) {
     return vec4(0);
 }
 
-
-
-
-
 void main() {
     // this will calculate the texel size
     vec2 texSize = textureSize(colorTarget, 0);

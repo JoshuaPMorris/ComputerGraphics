@@ -13,7 +13,6 @@ ParticleEmitter::ParticleEmitter(unsigned int _maxParticles, unsigned int _emitR
 	m_velocityMin(_velocityMin), m_velocityMax(_velocityMax), m_startSize(_startSize), m_endSize(_endSize),
 	m_startColor(_startColor), m_endColor(_endColor)
 {
-
 }
 
 ParticleEmitter::~ParticleEmitter()
@@ -65,9 +64,9 @@ void ParticleEmitter::Initialise(unsigned int _maxParticles, unsigned int _emitR
 		indexData[i * 6 + 0] = i * 4;
 		indexData[i * 6 + 1] = i * 4 + 1;
 		indexData[i * 6 + 2] = i * 4 + 2;
-		indexData[i * 6 + 3] = i * 4 + 3;
-		indexData[i * 6 + 4] = i * 4;
-		indexData[i * 6 + 5] = i * 4 + 2;
+		indexData[i * 6 + 3] = i * 4;
+		indexData[i * 6 + 4] = i * 4 + 2;
+		indexData[i * 6 + 5] = i * 4 + 3;
 	}
 
 	// Time to create the OpenGL buffers! (WOOOOOOOOOOOO *cries*)

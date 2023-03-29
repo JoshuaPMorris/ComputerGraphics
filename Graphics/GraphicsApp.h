@@ -111,7 +111,7 @@ protected:
 	BaseCamera			*m_camera;
 	FlyCamera			m_flyCamera;
 	OribtalCamera		m_orbitalCamera;
-	StationaryCamera	 m_stationaryCamera;
+	StationaryCamera	m_stationaryCamera;
 
 	Light				m_light;
 	glm::vec3			m_ambientLight;
