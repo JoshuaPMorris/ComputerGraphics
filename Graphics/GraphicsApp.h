@@ -54,12 +54,21 @@ protected:
 
 	bool SpearLoader();
 
+	bool BookLoader();
+
+	bool R2D2Loader();
+
 	void PhongDraw(glm::mat4 pvm, glm::mat4 transform, float time);
 
 	int m_postProcessEffect;
 
 	bool BoxLoading();
 	void BoxDraw(glm::mat4 pvm);
+
+	// Mesh variables
+	float m_planetSpeed;
+
+	int m_numberOfSpear;
 
 	// Light values
 	glm::vec3 m_sunLightColor;
@@ -70,6 +79,10 @@ protected:
 
 	float m_horizontalLightPosition;
 	float m_verticalLightPosition;
+
+	bool m_toggleSunLight;
+	bool m_toggleHorizontalLight;
+	bool m_toggleVerticalLight;
 
 	// Camera Positions
 	glm::vec3 m_stationaryXPos;
@@ -87,10 +100,12 @@ protected:
 	bool m_flyCam;
 
 	// Scene Selector
-	bool m_plain;
-	bool m_solarsystem;
-	bool m_bunny;
-	bool m_soulSpear;
+	bool m_togglePlain;
+	bool m_toggleSolarsystem;
+	bool m_toggleBunny;
+	bool m_toggleSoulSpear;
+	bool m_toggleR2d2;
+	bool m_toggleBook;
 
 	Scene*				m_scene;
 
@@ -117,6 +132,12 @@ protected:
 
 	aie::OBJMesh		m_spearMesh;
 	glm::mat4			m_spearTransform;
+
+	aie::OBJMesh		m_r2d2Mesh;
+	glm::mat4			m_r2d2Transform;
+
+	aie::OBJMesh		m_bookMesh;
+	glm::mat4			m_bookTransform;
 	
 	BaseCamera			*m_camera;
 	FlyCamera			m_flyCamera;

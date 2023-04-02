@@ -32,14 +32,24 @@ bool GraphicsApp::startup() {
 	m_viewMatrix = glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
 	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, 16.0f / 9.0f, 0.1f, 1000.0f);
 
-	m_bunny =		false;
-	m_solarsystem = false;
-	m_soulSpear =	false;
-	m_plain =		false;
+	m_togglePlain		= false;
+	m_toggleSolarsystem = false;
+	m_toggleBunny		= false;
+	m_toggleSoulSpear	= false;
+	m_toggleR2d2		= false;
+	m_toggleBook		= false;
 
-	m_sunLightColor = glm::vec3(0, 0, 1);
-	m_horizontalLightColor = glm::vec3(1, 0, 0);
-	m_verticalLightColor = glm::vec3(0, 1, 0);
+	m_toggleSunLight		= true;
+	m_toggleHorizontalLight = true;
+	m_toggleVerticalLight	= true;
+
+	m_sunLightColor			= glm::vec3(0, 0, 1);
+	m_horizontalLightColor	= glm::vec3(1, 0, 0);
+	m_verticalLightColor	= glm::vec3(0, 1, 0);
+
+	m_planetSpeed = 1;
+
+	m_numberOfSpear = 1;
 
 	Light light;
 	light.color =			{ 4, 3, 5 };
@@ -103,8 +113,10 @@ void GraphicsApp::update(float deltaTime) {
 		m_postProcessEffect = 0;
 	if (m_postProcessEffect < 0)
 		m_postProcessEffect = 10;
+	if (m_numberOfSpear <= 0)
+		m_numberOfSpear = 1;
 
-#pragma region CameraPositions
+#pragma region CameraVariables
 	if (m_stCamX)
 		m_stationaryXPos = m_camera->GetPosition();
 	if (m_stCamY)
@@ -119,21 +131,14 @@ void GraphicsApp::update(float deltaTime) {
 	}
 #pragma endregion
 
-
-
 #pragma region LightVariables
-	//m_scene->GetPointLightColors()[0] = m_sunLightColor;
-	//m_scene->GetPointLightColors()[1] = m_horizontalLightColor;
-	//m_scene->GetPointLightColors()[2] = m_verticalLightColor;
 	m_sunLight->color = m_sunLightColor;
-	m_horizontalLight->color = m_horizontalLightColor;
-	m_verticalLight->color = m_verticalLightColor;
-
 	m_sunLight->direction = glm::normalize(glm::vec3(glm::cos(time * m_sunLightSpeed), glm::sin(time * m_sunLightSpeed), 0));
-
-	//m_scene->GetPointLightPositions()[1] = glm::vec3(m_horizontalLightPosition, 0, 0);
-	//m_scene->GetPointLightPositions()[2] = glm::vec3(0, m_verticalLightPosition, 0);
+	
+	m_horizontalLight->color = m_horizontalLightColor;
 	m_horizontalLight->position = glm::vec3(m_horizontalLightPosition, 0, 0);
+	
+	m_verticalLight->color = m_verticalLightColor;
 	m_verticalLight->position = glm::vec3(0, m_verticalLightPosition, 0);
 #pragma endregion
 
@@ -159,7 +164,9 @@ void GraphicsApp::update(float deltaTime) {
 	// add a transform so that we can see the axis
 	Gizmos::addTransform(mat4(1));
 	
-	if (m_solarsystem) SolarSystem(time);
+#pragma region CreateObjects
+	if (m_toggleSolarsystem) SolarSystem(time);
+#pragma endregion
 
 #pragma region CameraCylinders
 	if (m_flyCam)
@@ -189,10 +196,23 @@ void GraphicsApp::update(float deltaTime) {
 #pragma endregion
 
 #pragma region LightSpheres
-	aie::Gizmos::addSphere(m_sunLight->position, 0.5, 10, 10, glm::vec4(m_sunLight->color, 0.5));
-	aie::Gizmos::addSphere(m_horizontalLight->position, 0.5, 10, 10, glm::vec4(m_horizontalLight->color, 0.5));
-	aie::Gizmos::addSphere(m_verticalLight->position, 0.5, 10, 10, glm::vec4(m_verticalLight->color, 0.5));
+	if (m_toggleSunLight)
+		aie::Gizmos::addSphere(m_sunLight->position, 0.5, 10, 10, glm::vec4(m_sunLight->color, 0.5));
+	if (m_toggleHorizontalLight)
+		aie::Gizmos::addSphere(m_horizontalLight->position, 0.5, 10, 10, glm::vec4(m_horizontalLight->color, 0.5));
+	if (m_toggleVerticalLight)
+		aie::Gizmos::addSphere(m_verticalLight->position, 0.5, 10, 10, glm::vec4(m_verticalLight->color, 0.5));
 #pragma endregion
+
+	//if (m_soulSpear)
+	//{
+	//	//m_scene->AddInstance(new Instance(glm::vec3(2, 0, 0),
+	//	//	glm::vec3(0, 30, 0), glm::vec3(1, 1, 1),
+	//	//	&m_spearMesh, &m_normalLitShader));
+	//}
+
+
+
 
 	aie::Input* input = aie::Input::getInstance();
 
@@ -207,6 +227,9 @@ void GraphicsApp::update(float deltaTime) {
 }
 
 void GraphicsApp::draw() {
+
+	float time = getTime();
+
 	// Bind the render target as the first 
 	// part of our draw function
 	m_renderTarget.bind();
@@ -236,7 +259,15 @@ void GraphicsApp::draw() {
 	// Draw the quad setup in QuadLoader()
 	// QuadDraw(pv * m_quadTransform);
 
+	//if (m_bunny)
+	//{
+	//	BunnyDraw(pv * m_bunnyTransform);
+	//}
 
+	if (m_toggleBunny)
+	{
+		PhongDraw(pv, m_bunnyTransform, time);
+	}
 
 	// Bind the post process shader and the texture
 	m_postProcessShader.bind();
@@ -254,15 +285,15 @@ void GraphicsApp::draw() {
 void GraphicsApp::SolarSystem(float time)
 {
 	// Creates a solar system of planets from class Planet
-	Planet* sun = new Planet(vec3(0), 0, time, 1, 0, false, 0, vec4(250, 255, 0, 0.5));
-	Planet* mercury = new Planet(vec3(1.75, 0, 1.75), 4.787f, time, 0.15, 0, false, 0, vec4(189, 205, 214, 0.5));
-	Planet* venus = new Planet(vec3(3, 0, 3), 3.502f, time, 0.3, 0, false, 0, vec4(255, 139, 19, 0.5));
-	Planet* earth = new Planet(vec3(4.25, 0, 4.25), 2.978f, time, 0.3, 0, false, 0, vec4(0, 146, 255, 0.5));
-	Planet* mars = new Planet(vec3(5.5, 0, 5.5), 2.4077f, time, 0.2, 0, false, 0, vec4(255, 17, 0, 0.5));
-	Planet* jupiter = new Planet(vec3(6.75, 0, 6.75), 1.307f, time, 0.4, 0, true, 0.09, vec4(242, 167, 90, 0.5));
-	Planet* saturn = new Planet(vec3(8, 0, 8), 0.969, time, 0.4, 0, true, 0.13, vec4(255, 203, 47, 0.5)); // large
-	Planet* uranus = new Planet(vec3(9.25, 0, 9.25), 0.681, time, 0.3, 0, true, 0.1, vec4(135, 192, 245, 0.5));
-	Planet* neptune = new Planet(vec3(10.5, 0, 10.5), 0.543, time, 0.3, 0, true, 0.09, vec4(35, 149, 255, 0.5));
+	Planet* sun = new Planet(vec3(0),					0,		time * m_planetSpeed, 1,	0, false, 0,	vec4(250, 255, 0,   0.5));
+	Planet* mercury = new Planet(vec3(1.75, 0, 1.75),	4.787f, time * m_planetSpeed, 0.15, 0, false, 0,	vec4(189, 205, 214, 0.5));
+	Planet* venus = new Planet(vec3(3, 0, 3),			3.502f, time * m_planetSpeed, 0.3,	0, false, 0,	vec4(255, 139, 19,  0.5));
+	Planet* earth = new Planet(vec3(4.25, 0, 4.25),		2.978f, time * m_planetSpeed, 0.3,	0, false, 0,	vec4(0,	  146, 255, 0.5));
+	Planet* mars = new Planet(vec3(5.5, 0, 5.5),		2.407f, time * m_planetSpeed, 0.2,	0, false, 0,	vec4(255, 17,  0,   0.5));
+	Planet* jupiter = new Planet(vec3(6.75, 0, 6.75),	1.307f, time * m_planetSpeed, 0.4,	0, true,  0.09, vec4(242, 167, 90,  0.5));
+	Planet* saturn = new Planet(vec3(8, 0, 8),			0.969,	time * m_planetSpeed, 0.4,	0, true,  0.13, vec4(255, 203, 47,  0.5)); // large
+	Planet* uranus = new Planet(vec3(9.25, 0, 9.25),	0.681,	time * m_planetSpeed, 0.3,	0, true,  0.1,	vec4(135, 192, 245, 0.5));
+	Planet* neptune = new Planet(vec3(10.5, 0, 10.5),	0.543,	time * m_planetSpeed, 0.3,	0, true,  0.09, vec4(35,  149, 255, 0.5));
 
 	sun->Draw();
 	mercury->Draw();
@@ -345,22 +376,22 @@ bool GraphicsApp::LaunchShaders()
 	// Create a full screen quad
 	m_fullScreenQuad.InitialiseFullScreenQuad();
 
-
-	// Used for loading in an OBJ bunny
-	if (!BunnyLoader())
-		return false;
-
 	// Used for loading in a spear
 	if (!SpearLoader())
 		return false;
 
-#pragma region CreateObjects
-	for (int i = 0; i < 10; i++)
+	if (!BookLoader())
+		return false;
+
+#pragma region CreateObjectsButNo
+	for (int i = 0; i < m_numberOfSpear; i++)
 	{
 		m_scene->AddInstance(new Instance(glm::vec3(i * 2, 0, 0),
 			glm::vec3(0, i * 30, 0), glm::vec3(1, 1, 1),
 			&m_spearMesh, &m_normalLitShader));
 	}
+
+	
 #pragma endregion
 
 	return true;
@@ -377,21 +408,45 @@ void GraphicsApp::ImGUIRefesher()
 
 #pragma region MeshSelector
 	ImGui::Begin("Mesh Selector");
-	ImGui::Checkbox("Solar System", &m_solarsystem);
-	ImGui::Checkbox("Bunny", &m_bunny);
-	ImGui::Checkbox("Soul Spear", &m_soulSpear);
-	ImGui::Checkbox("Plain", &m_plain);
+	ImGui::Checkbox("Solar System", &m_toggleSolarsystem);
+	if (m_toggleSolarsystem == true)
+	{
+		ImGui::DragFloat("Planet Speed",
+			&m_planetSpeed, 0.1, 0, 10);
+	}
+	ImGui::Checkbox("Soul Spear", &m_toggleSoulSpear);
+	if (m_toggleSoulSpear)
+	{
+		ImGui::InputInt("Number of Spears",
+			&m_numberOfSpear, 1, 2);
+		// Rotate, Move, Scale, Make More
+	}
+	if (ImGui::Checkbox("Plain", &m_togglePlain))
+	{
+		// Rotate, Move, Scale
+	}
+	if (ImGui::Checkbox("Bunny", &m_toggleBunny))
+	{
+		// Rotate, Move, Scale
+	}
+	if (ImGui::Checkbox("Book", &m_toggleR2d2))
+	{
+		// Rotate, Move, Scale
+	}
 	ImGui::End();
 #pragma endregion
 
 #pragma region CameraSelector
 	ImGui::Begin("Camera Selector/Settings");
-	if (ImGui::Button("StationaryCamera"))
+	if (ImGui::Button("StationaryCamera X-Axis"))
 	{
-		m_camera->GetPosition();
 		delete m_camera;
-		m_camera = new StationaryCamera();
+		m_camera = new StationaryCamera(true, false, false, m_stationaryXPos);
 		m_scene->SetCamera(m_camera);
+		m_flyCam = false;
+		m_stCamX = true;
+		m_stCamY = false;
+		m_stCamZ = false;
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("FlyCamera"))
@@ -401,21 +456,6 @@ void GraphicsApp::ImGUIRefesher()
 		m_scene->SetCamera(m_camera);
 		m_flyCam = true;
 		m_stCamX = false;
-		m_stCamY = false;
-		m_stCamZ = false;
-	}
-	ImGui::SameLine();
-	if (ImGui::Button("OrbitalCamera"))
-	{
-
-	}
-	if (ImGui::Button("StationaryCamera X-Axis"))
-	{
-		delete m_camera;
-		m_camera = new StationaryCamera(true, false, false, m_stationaryXPos);
-		m_scene->SetCamera(m_camera);
-		m_flyCam = false;
-		m_stCamX = true;
 		m_stCamY = false;
 		m_stCamZ = false;
 	}
@@ -444,13 +484,14 @@ void GraphicsApp::ImGUIRefesher()
 
 #pragma region LightSettings
 	ImGui::Begin("Light Settings");
-	if (ImGui::CollapsingHeader("Sun Light"))
+	if (ImGui::CollapsingHeader("SunLight"))
 	{
 		ImGui::DragFloat3("Sun Color",
 			&m_sunLightColor[0], 0.1, 0, 255);
 		ImGui::DragFloat("Sun Speed",
 			&m_sunLightSpeed, 0.1, -20, 20);
-		// Turn off button
+		ImGui::Checkbox("Toggle SunLight Sphere",
+			&m_toggleSunLight);
 	}
 	if (ImGui::CollapsingHeader("Horizontal Light"))
 	{
@@ -458,7 +499,8 @@ void GraphicsApp::ImGUIRefesher()
 			&m_horizontalLightColor[0], 0.1, 0, 255);
 		ImGui::DragFloat("Horizontal Position",
 			&m_horizontalLightPosition, 1, -100, 100);
-		// Turn off button
+		ImGui::Checkbox("Toggle HorizontalLight Sphere",
+			&m_toggleHorizontalLight);
 	}
 	if (ImGui::CollapsingHeader("Vertical Light"))
 	{
@@ -466,7 +508,8 @@ void GraphicsApp::ImGUIRefesher()
 			&m_verticalLightColor[0], 0.1, 0, 255);
 		ImGui::DragFloat("Vertical Position",
 			&m_verticalLightPosition, 0, -100, 100);
-		// Turn off button
+		ImGui::Checkbox("Toggle VerticalLight Sphere",
+			&m_toggleVerticalLight);
 	}
 	ImGui::End();
 #pragma endregion
@@ -643,6 +686,42 @@ bool GraphicsApp::SpearLoader()
 	return true;
 }
 
+bool GraphicsApp::BookLoader()
+{
+	if (m_bookMesh.load("./book/book_2.obj", true, true) == false)
+	{
+		printf("Magic Book Mesh Error!\n");
+		return false;
+	}
+
+	m_bookTransform = {
+	1, 0, 0, 0,
+	0, 1, 0, 0,
+	0, 0, 1, 0,
+	0, 0, 0, 1
+	};
+
+	return true;
+}
+
+bool GraphicsApp::R2D2Loader()
+{
+	if (m_r2d2Mesh.load("./r2d2/r2-d2.obj", true, true) == false)
+	{
+		printf("R2D2 Mesh Error!\n");
+		return false;
+	}
+
+	m_r2d2Transform = {
+	1, 0, 0, 0,
+	0, 1, 0, 0,
+	0, 0, 1, 0,
+	0, 0, 0, 1
+	};
+
+	return true;
+}
+
 void GraphicsApp::ObjDraw(glm::mat4 pv, glm::mat4 transform, aie::OBJMesh* objMesh)
 {
 	m_normalLitShader.bind();
@@ -690,8 +769,6 @@ void GraphicsApp::PhongDraw(glm::mat4 pvm, glm::mat4 transform, float time)
 	// Bind the transform using the one provided
 	m_phongShader.bindUniform("ModelMatrix", transform);
 
-	if (m_soulSpear) m_spearMesh.draw();
-	if (m_solarsystem) SolarSystem(time);
-	if (m_bunny) m_bunnyMesh.draw();
-	if (m_plain) m_quadMesh.Draw();
+	if (m_toggleBunny) m_bunnyMesh.draw();
+	if (m_togglePlain) m_quadMesh.Draw();
 }
