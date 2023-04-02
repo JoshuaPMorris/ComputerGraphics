@@ -62,8 +62,14 @@ protected:
 	void BoxDraw(glm::mat4 pvm);
 
 	// Light values
-	glm::vec3 m_linearLightColor;
 	glm::vec3 m_sunLightColor;
+	glm::vec3 m_horizontalLightColor;
+	glm::vec3 m_verticalLightColor;
+
+	float m_sunLightSpeed;
+
+	float m_horizontalLightPosition;
+	float m_verticalLightPosition;
 
 	// Camera Positions
 	glm::vec3 m_stationaryXPos;
@@ -118,7 +124,8 @@ protected:
 	StationaryCamera	m_stationaryCamera;
 
 	Light*				m_sunLight;
-	Light*				m_linearLight;
+	Light*				m_horizontalLight;
+	Light*				m_verticalLight;
 
 	Light				m_light;
 	glm::vec3			m_ambientLight;

@@ -38,7 +38,8 @@ bool GraphicsApp::startup() {
 	m_plain =		false;
 
 	m_sunLightColor = glm::vec3(0, 0, 1);
-	m_linearLightColor = glm::vec3(1, 0, 0);
+	m_horizontalLightColor = glm::vec3(1, 0, 0);
+	m_verticalLightColor = glm::vec3(0, 1, 0);
 
 	Light light;
 	light.color =			{ 4, 3, 5 };
@@ -71,10 +72,17 @@ bool GraphicsApp::startup() {
 		getWindowHeight()), light, m_ambientLight);
 
 	m_scene->AddPointLights(glm::vec3(-5, 3, 0), m_sunLightColor, 50);
-	m_scene->AddPointLights(glm::vec3(5, 3, 0), m_linearLightColor, 50);
+	m_scene->AddPointLights(glm::vec3(5, 3, 0), m_horizontalLightColor, 50);
+	m_scene->AddPointLights(glm::vec3(-5, 3, 0), m_verticalLightColor, 50);
 
 	m_sunLight = &m_scene->GetPointLights()[0];
-	m_linearLight = &m_scene->GetPointLights()[1];
+	m_horizontalLight = &m_scene->GetPointLights()[1];
+	m_verticalLight = &m_scene->GetPointLights()[2];
+
+	m_sunLightSpeed = 2;
+
+	m_horizontalLightPosition = 5;
+	m_verticalLightPosition = 5;
 
 	return LaunchShaders();
 }
@@ -86,6 +94,8 @@ void GraphicsApp::shutdown() {
 }
 
 void GraphicsApp::update(float deltaTime) {
+
+	float time = getTime();
 
 	m_camera->update(deltaTime);
 
@@ -109,14 +119,23 @@ void GraphicsApp::update(float deltaTime) {
 	}
 #pragma endregion
 
+
+
 #pragma region LightVariables
+	//m_scene->GetPointLightColors()[0] = m_sunLightColor;
+	//m_scene->GetPointLightColors()[1] = m_horizontalLightColor;
+	//m_scene->GetPointLightColors()[2] = m_verticalLightColor;
 	m_sunLight->color = m_sunLightColor;
-	m_linearLight->color = m_linearLightColor;
+	m_horizontalLight->color = m_horizontalLightColor;
+	m_verticalLight->color = m_verticalLightColor;
+
+	m_sunLight->direction = glm::normalize(glm::vec3(glm::cos(time * m_sunLightSpeed), glm::sin(time * m_sunLightSpeed), 0));
+
+	//m_scene->GetPointLightPositions()[1] = glm::vec3(m_horizontalLightPosition, 0, 0);
+	//m_scene->GetPointLightPositions()[2] = glm::vec3(0, m_verticalLightPosition, 0);
+	m_horizontalLight->position = glm::vec3(m_horizontalLightPosition, 0, 0);
+	m_verticalLight->position = glm::vec3(0, m_verticalLightPosition, 0);
 #pragma endregion
-
-
-	// query time since application started
-	float time = getTime();
 
 	// rotate camera
 	m_viewMatrix = glm::lookAt(vec3(glm::sin(time) * 10, 10, glm::cos(time) * 10),
@@ -151,13 +170,13 @@ void GraphicsApp::update(float deltaTime) {
 	}
 	else if (m_stCamX)
 	{
-		aie::Gizmos::addCylinderFilled(m_flyPos,		 0.5, 1, 10, glm::vec4(165, 148, 249, 0.5));
+		aie::Gizmos::addCylinderFilled(m_flyPos, 0.5, 1, 10, glm::vec4(165, 148, 249, 0.5));
 		aie::Gizmos::addCylinderFilled(m_stationaryYPos, 0.5, 1, 10, glm::vec4(255, 90, 95, 0.5));
 		aie::Gizmos::addCylinderFilled(m_stationaryZPos, 0.5, 1, 10, glm::vec4(49, 203, 0, 0.5));
 	}
 	else if (m_stCamY)
 	{
-		aie::Gizmos::addCylinderFilled(m_flyPos,		 0.5, 1, 10, glm::vec4(165, 148, 249, 0.5));
+		aie::Gizmos::addCylinderFilled(m_flyPos, 0.5, 1, 10, glm::vec4(165, 148, 249, 0.5));
 		aie::Gizmos::addCylinderFilled(m_stationaryXPos, 0.5, 1, 10, glm::vec4(8, 126, 0, 0.5));
 		aie::Gizmos::addCylinderFilled(m_stationaryZPos, 0.5, 1, 10, glm::vec4(49, 203, 0, 0.5));
 	}
@@ -169,20 +188,19 @@ void GraphicsApp::update(float deltaTime) {
 	}
 #pragma endregion
 
-	// quit if we press escape
+#pragma region LightSpheres
+	aie::Gizmos::addSphere(m_sunLight->position, 0.5, 10, 10, glm::vec4(m_sunLight->color, 0.5));
+	aie::Gizmos::addSphere(m_horizontalLight->position, 0.5, 10, 10, glm::vec4(m_horizontalLight->color, 0.5));
+	aie::Gizmos::addSphere(m_verticalLight->position, 0.5, 10, 10, glm::vec4(m_verticalLight->color, 0.5));
+#pragma endregion
+
 	aie::Input* input = aie::Input::getInstance();
-
-
-	// Rotate the light to emulate a 'day/night' cycle
-	m_light.direction = 
-		glm::normalize(glm::vec3(glm::cos(time * 2), glm::sin(time * 2), 0));
 
 	ImGUIRefesher();
 
+	// quit if we press escape
 	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
 		quit();
-
-
 
 	m_emitter->Update(deltaTime, m_scene->GetCamera()->GetTransform(
 		m_camera->GetPosition(), glm::vec3(0), glm::vec3(1)));
@@ -350,19 +368,6 @@ bool GraphicsApp::LaunchShaders()
 
 void GraphicsApp::ImGUIRefesher()
 {
-#pragma region MeshLightSettings
-	ImGui::Begin("Mesh Light Settings");
-	ImGui::DragFloat3("Global Light Color",
-		&m_light.color[0], 0.1, 0, 100);
-	ImGui::DragFloat3("Global Light Direction",
-		&m_light.direction[0], 0.1, -1, 100);
-	ImGui::DragFloat3("Ambient Light",
-		&m_ambientLight[0], 0.1, 0, 100);
-	ImGui::DragFloat("Specular Strength",
-		&m_specularStrength, 1, 0, 100);
-	ImGui::End();
-#pragma endregion
-
 #pragma region ShaderEffects
 	ImGui::Begin("ShaderEffects");
 	ImGui::InputInt("Post Process Effect",
@@ -439,19 +444,32 @@ void GraphicsApp::ImGUIRefesher()
 
 #pragma region LightSettings
 	ImGui::Begin("Light Settings");
-	ImGui::DragFloat3("SunLightColor",
-		&m_sunLightColor[0], 0.1, 0, 255);
-	ImGui::DragFloat3("LinearLightColor",
-		&m_linearLightColor[0], 0.1, 0, 255);
-	// Light color
-	// Light position (x, y, z)
-	// Light rotational speed
-	// Sphere to see where the lights are (easy)
-	// Turn lights on and off
-	// Overall, 2 lights
+	if (ImGui::CollapsingHeader("Sun Light"))
+	{
+		ImGui::DragFloat3("Sun Color",
+			&m_sunLightColor[0], 0.1, 0, 255);
+		ImGui::DragFloat("Sun Speed",
+			&m_sunLightSpeed, 0.1, -20, 20);
+		// Turn off button
+	}
+	if (ImGui::CollapsingHeader("Horizontal Light"))
+	{
+		ImGui::DragFloat3("Horizontal Color",
+			&m_horizontalLightColor[0], 0.1, 0, 255);
+		ImGui::DragFloat("Horizontal Position",
+			&m_horizontalLightPosition, 1, -100, 100);
+		// Turn off button
+	}
+	if (ImGui::CollapsingHeader("Vertical Light"))
+	{
+		ImGui::DragFloat3("Vertical Color",
+			&m_verticalLightColor[0], 0.1, 0, 255);
+		ImGui::DragFloat("Vertical Position",
+			&m_verticalLightPosition, 0, -100, 100);
+		// Turn off button
+	}
 	ImGui::End();
 #pragma endregion
-
 }
 
 bool GraphicsApp::QuadLoader()

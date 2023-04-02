@@ -14,14 +14,17 @@ struct Light
 	{
 		direction = glm::vec3(0);
 		color = glm::vec3(1);
+		position = glm::vec3(0);
 	}
 	Light(glm::vec3 _position, glm::vec3 _color, float _intensity) 
 	{
 		direction = _position;
 		color = _color * _intensity;
+		position = _position;
 	}
 	glm::vec3 direction;
 	glm::vec3 color;
+	glm::vec3 position;
 };
 
 class Scene
