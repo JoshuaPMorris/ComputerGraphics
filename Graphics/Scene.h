@@ -34,6 +34,7 @@ public:
 		Light& light, glm::vec3 ambientLightColor);
 	~Scene();
 	void AddInstance(Instance* instance);
+	void ClearInstance();
 	void Draw();
 
 	void AddPointLights(Light light) { m_pointLights.push_back(light); }
@@ -59,11 +60,11 @@ protected:
 	BaseCamera*				m_camera;
 	glm::vec2				m_windowSize;
 
+	std::list<Instance*>	m_instances;
 	Light					unLight;
 	std::vector<Light>		m_pointLights;
 	Light					m_light;
 	glm::vec3				m_ambientLightColor;
-	std::list<Instance*>	m_instances;
 
 	glm::vec3 m_pointLightPositions[MAX_LIGHTS];
 	glm::vec3 m_pointLightColors[MAX_LIGHTS];

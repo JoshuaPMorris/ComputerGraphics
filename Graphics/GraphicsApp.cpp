@@ -36,8 +36,9 @@ bool GraphicsApp::startup() {
 	m_toggleSolarsystem = false;
 	m_toggleBunny		= false;
 	m_toggleSoulSpear	= false;
-	m_toggleR2d2		= false;
+	m_toggleR2D2		= false;
 	m_toggleBook		= false;
+	m_toggleParticles	= false;
 
 	m_toggleSunLight		= true;
 	m_toggleHorizontalLight = true;
@@ -49,11 +50,15 @@ bool GraphicsApp::startup() {
 
 	m_planetSpeed = 1;
 
-	m_numberOfSpear = 1;
+	m_numOfSpear = 0;
+	m_numOfBunny = 0;
+	m_numOfBook = 0;
+	m_numOfR2D2 = 0;
 
-	Light light;
-	light.color =			{ 4, 3, 5 };
-	light.direction =		{ 1, -1, 1 };
+
+	Light light = Light(vec3(1, -1, 1), vec3(4, 3, 5), 1);
+	//light.color =			{ 4, 3, 5 };
+	//light.direction =		{ 1, -1, 1 };
 	m_ambientLight =		{ 30.f, 30.f, 30.f };
 	m_specularStrength =	0.f;
 	m_postProcessEffect =	0;
@@ -113,8 +118,6 @@ void GraphicsApp::update(float deltaTime) {
 		m_postProcessEffect = 0;
 	if (m_postProcessEffect < 0)
 		m_postProcessEffect = 10;
-	if (m_numberOfSpear <= 0)
-		m_numberOfSpear = 1;
 
 #pragma region CameraVariables
 	if (m_stCamX)
@@ -204,16 +207,32 @@ void GraphicsApp::update(float deltaTime) {
 		aie::Gizmos::addSphere(m_verticalLight->position, 0.5, 10, 10, glm::vec4(m_verticalLight->color, 0.5));
 #pragma endregion
 
-	//if (m_soulSpear)
-	//{
-	//	//m_scene->AddInstance(new Instance(glm::vec3(2, 0, 0),
-	//	//	glm::vec3(0, 30, 0), glm::vec3(1, 1, 1),
-	//	//	&m_spearMesh, &m_normalLitShader));
-	//}
-
-
-
-
+#pragma region ToggleInstances
+	if (m_toggleSoulSpear)
+	{
+		m_scene->AddInstance(new Instance(glm::vec3(2 * m_numOfSpear, 0, 0), glm::vec3(0, 30 * m_numOfSpear, 0),
+			glm::vec3(1), &m_spearMesh, &m_normalLitShader));
+		m_toggleSoulSpear = false;
+	}
+	if (m_toggleBunny)
+	{
+		m_scene->AddInstance(new Instance(glm::vec3(2 * m_numOfBunny, 0, 0), glm::vec3(0, 30 * m_numOfBunny, 0),
+			glm::vec3(1), &m_bunnyMesh, &m_normalLitShader));
+		m_toggleBunny = false;
+	}
+	if (m_toggleR2D2)
+	{
+		m_scene->AddInstance(new Instance(glm::vec3(2 * m_numOfR2D2, 0, 0), glm::vec3(0, 30 * m_numOfR2D2, 0),
+			glm::vec3(1), &m_r2d2Mesh, &m_normalLitShader));
+		m_toggleR2D2 = false;
+	}
+	if (m_toggleBook)
+	{
+		m_scene->AddInstance(new Instance(glm::vec3(2 * m_numOfBook, 0, 0), glm::vec3(0, 30 * m_numOfBook, 0),
+			glm::vec3(1), &m_bookMesh, &m_normalLitShader));
+		m_toggleBook = false;
+	}
+#pragma endregion
 	aie::Input* input = aie::Input::getInstance();
 
 	ImGUIRefesher();
@@ -222,8 +241,11 @@ void GraphicsApp::update(float deltaTime) {
 	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
 		quit();
 
-	m_emitter->Update(deltaTime, m_scene->GetCamera()->GetTransform(
-		m_camera->GetPosition(), glm::vec3(0), glm::vec3(1)));
+	if (m_toggleParticles)
+	{
+		m_emitter->Update(deltaTime, m_scene->GetCamera()->GetTransform(
+			m_camera->GetPosition(), glm::vec3(0), glm::vec3(1)));
+	}
 }
 
 void GraphicsApp::draw() {
@@ -258,11 +280,6 @@ void GraphicsApp::draw() {
 
 	// Draw the quad setup in QuadLoader()
 	// QuadDraw(pv * m_quadTransform);
-
-	//if (m_bunny)
-	//{
-	//	BunnyDraw(pv * m_bunnyTransform);
-	//}
 
 	if (m_toggleBunny)
 	{
@@ -376,22 +393,11 @@ bool GraphicsApp::LaunchShaders()
 	// Create a full screen quad
 	m_fullScreenQuad.InitialiseFullScreenQuad();
 
-	// Used for loading in a spear
-	if (!SpearLoader())
-		return false;
-
-	if (!BookLoader())
-		return false;
-
-#pragma region CreateObjectsButNo
-	for (int i = 0; i < m_numberOfSpear; i++)
-	{
-		m_scene->AddInstance(new Instance(glm::vec3(i * 2, 0, 0),
-			glm::vec3(0, i * 30, 0), glm::vec3(1, 1, 1),
-			&m_spearMesh, &m_normalLitShader));
-	}
-
-	
+#pragma region LoadingMeshes
+	ObjLoader(m_spearMesh, m_spearTransform, 1,   "./soulspear/", "soulspear.obj", true);
+	ObjLoader(m_bunnyMesh, m_bunnyTransform, 0.1, "./stanford/",  "Bunny.obj",	   true);
+	ObjLoader(m_r2d2Mesh,  m_r2d2Transform,	 0.01,   "./r2d2/",      "r2-d2.obj",     true);
+	ObjLoader(m_bookMesh,  m_bookTransform,	 0.1,   "./book/",      "book_2.obj",    true);
 #pragma endregion
 
 	return true;
@@ -403,6 +409,7 @@ void GraphicsApp::ImGUIRefesher()
 	ImGui::Begin("ShaderEffects");
 	ImGui::InputInt("Post Process Effect",
 		&m_postProcessEffect, 1, 2);
+	ImGui::Checkbox("Particles", &m_toggleParticles);
 	ImGui::End();
 #pragma endregion
 
@@ -414,24 +421,37 @@ void GraphicsApp::ImGUIRefesher()
 		ImGui::DragFloat("Planet Speed",
 			&m_planetSpeed, 0.1, 0, 10);
 	}
-	ImGui::Checkbox("Soul Spear", &m_toggleSoulSpear);
-	if (m_toggleSoulSpear)
+	if (ImGui::Button("Soul Spear"))
 	{
-		ImGui::InputInt("Number of Spears",
-			&m_numberOfSpear, 1, 2);
-		// Rotate, Move, Scale, Make More
-	}
-	if (ImGui::Checkbox("Plain", &m_togglePlain))
-	{
+		m_toggleSoulSpear = true;
+		m_numOfSpear++;
 		// Rotate, Move, Scale
 	}
-	if (ImGui::Checkbox("Bunny", &m_toggleBunny))
+	if (ImGui::Button("Bunny"))
 	{
+		m_toggleBunny = true;
+		m_numOfBunny++;
 		// Rotate, Move, Scale
 	}
-	if (ImGui::Checkbox("Book", &m_toggleR2d2))
+	if (ImGui::Button("R2D2"))
 	{
+		m_toggleR2D2 = true;
+		m_numOfR2D2++;
 		// Rotate, Move, Scale
+	}
+	if (ImGui::Button("Book"))
+	{
+		m_toggleBook = true;
+		m_numOfBook++;
+		// Rotate, Move, Scale
+	}
+	if (ImGui::Button("Clear All"))
+	{
+		m_scene->ClearInstance();
+		m_numOfSpear = 0;
+		m_numOfBunny = 0;
+		m_numOfR2D2 = 0;
+		m_numOfBook = 0;
 	}
 	ImGui::End();
 #pragma endregion
@@ -552,22 +572,6 @@ bool GraphicsApp::QuadLoader()
 	return true;
 }
 
-void GraphicsApp::QuadDraw(glm::mat4 pvm)
-{
-	// Bind the shader
-	m_texturedShader.bind();
-
-	// Bind the transform
-	m_texturedShader.bindUniform("ProjectionViewModel", pvm);
-
-	m_texturedShader.bindUniform("diffuseTexture", 0);
-
-	m_renderTarget.getTarget(0).bind(0);
-
-	// Draw the quad using Mesh's draw
-	m_quadMesh.Draw();
-}
-
 bool GraphicsApp::BunnyLoader()
 {
 	m_phongShader.loadShader(aie::eShaderStage::VERTEX,
@@ -593,79 +597,6 @@ bool GraphicsApp::BunnyLoader()
 		0, 0, 0, 1
 	};
 	return true;
-}
-
-void GraphicsApp::BunnyDraw(glm::mat4 pvm)
-{
-	// Bind the shader
-	m_colorShader.bind();
-
-	// Bind the transform
-	m_colorShader.bindUniform("ProjectionViewModel", pvm);
-
-	// Bind the color
-	m_colorShader.bindUniform("BaseColor", glm::vec4(1));
-
-	m_bunnyMesh.draw();
-}
-
-bool GraphicsApp::BoxLoading()
-{
-	m_simpleShader.loadShader(aie::eShaderStage::VERTEX,
-		"./shaders/simple.vert");
-	m_simpleShader.loadShader(aie::eShaderStage::FRAGMENT,
-		"./shaders/simple.frag");
-
-	if (m_simpleShader.link() == false)
-	{
-		printf("Simple Shader has an Error %s|\n",
-			m_simpleShader.getLastError());
-		return false;
-	}
-
-	// Defined as 4 vertices for the 2 triangles
-	Mesh::Vertex vertices[8];
-	vertices[0].position = { -0.5f, 0,  0.5f, 1 };
-	vertices[1].position = {  0.5f, 0,  0.5f, 1 };
-	vertices[2].position = { -0.5f, 0, -0.5f, 1 };
-	vertices[3].position = {  0.5f, 0, -0.5f, 1 };
-	vertices[4].position = { -0.5f, 1,  0.5f, 1 };
-	vertices[5].position = {  0.5f, 1,  0.5f, 1 };
-	vertices[6].position = { -0.5f, 1, -0.5f, 1 };
-	vertices[7].position = {  0.5f, 1, -0.5f, 1 };
-
-	unsigned int indices[36] = { 
-		0, 1, 2, 2, 1, 3,
-		4, 0, 6, 6, 0, 2,
-		5, 1, 4, 4, 1, 0,
-		7, 3, 5, 5, 3, 1,
-		6, 2, 7, 7, 2, 3,
-		7, 5, 6, 6, 5, 4
-	};
-
-	m_quadMesh.Initialise(8, vertices, 36, indices);
-
-	// This is a 10 'unit' wide quad
-	m_quadTransform = {
-		10, 0,  0,  0,
-		0,  10, 0,  0,
-		0,  0,  10, 0,
-		0,  0,  0,  1
-	};
-
-	return true;
-}
-
-void GraphicsApp::BoxDraw(glm::mat4 pvm)
-{
-	// Bind the shader
-	m_simpleShader.bind();
-
-	// Bind the transform
-	m_simpleShader.bindUniform("ProjectionViewModel", pvm);
-
-	// Draw the quad using Mesh's draw
-	m_quadMesh.Draw();
 }
 
 bool GraphicsApp::SpearLoader()
@@ -722,6 +653,107 @@ bool GraphicsApp::R2D2Loader()
 	return true;
 }
 
+bool GraphicsApp::ObjLoader(aie::OBJMesh& objMesh, glm::mat4& transform,
+	float scale, const char* filepath, const char* filename, bool flipTexture)
+{
+	std::string fileAdd = filepath;
+	fileAdd += filename;
+
+	if (objMesh.load(fileAdd.c_str(), true, flipTexture) == false)
+	{
+		std::string error = filename;
+		error += " Mesh Error\n";
+		printf(error.c_str());
+		return false;
+	}
+
+	transform = {
+	scale,  0,		0,		0,
+	0,		scale,  0,		0,
+	0,		0,		scale,  0,
+	0,		0,		0,		1
+	};
+
+	return true;
+}
+
+bool GraphicsApp::BoxLoading()
+{
+	m_simpleShader.loadShader(aie::eShaderStage::VERTEX,
+		"./shaders/simple.vert");
+	m_simpleShader.loadShader(aie::eShaderStage::FRAGMENT,
+		"./shaders/simple.frag");
+
+	if (m_simpleShader.link() == false)
+	{
+		printf("Simple Shader has an Error %s|\n",
+			m_simpleShader.getLastError());
+		return false;
+	}
+
+	// Defined as 4 vertices for the 2 triangles
+	Mesh::Vertex vertices[8];
+	vertices[0].position = { -0.5f, 0,  0.5f, 1 };
+	vertices[1].position = {  0.5f, 0,  0.5f, 1 };
+	vertices[2].position = { -0.5f, 0, -0.5f, 1 };
+	vertices[3].position = {  0.5f, 0, -0.5f, 1 };
+	vertices[4].position = { -0.5f, 1,  0.5f, 1 };
+	vertices[5].position = {  0.5f, 1,  0.5f, 1 };
+	vertices[6].position = { -0.5f, 1, -0.5f, 1 };
+	vertices[7].position = {  0.5f, 1, -0.5f, 1 };
+
+	unsigned int indices[36] = { 
+		0, 1, 2, 2, 1, 3,
+		4, 0, 6, 6, 0, 2,
+		5, 1, 4, 4, 1, 0,
+		7, 3, 5, 5, 3, 1,
+		6, 2, 7, 7, 2, 3,
+		7, 5, 6, 6, 5, 4
+	};
+
+	m_quadMesh.Initialise(8, vertices, 36, indices);
+
+	// This is a 10 'unit' wide quad
+	m_quadTransform = {
+		10, 0,  0,  0,
+		0,  10, 0,  0,
+		0,  0,  10, 0,
+		0,  0,  0,  1
+	};
+
+	return true;
+}
+
+void GraphicsApp::QuadDraw(glm::mat4 pvm)
+{
+	// Bind the shader
+	m_texturedShader.bind();
+
+	// Bind the transform
+	m_texturedShader.bindUniform("ProjectionViewModel", pvm);
+
+	m_texturedShader.bindUniform("diffuseTexture", 0);
+
+	m_renderTarget.getTarget(0).bind(0);
+
+	// Draw the quad using Mesh's draw
+	m_quadMesh.Draw();
+}
+
+void GraphicsApp::BunnyDraw(glm::mat4 pvm)
+{
+	// Bind the shader
+	m_colorShader.bind();
+
+	// Bind the transform
+	m_colorShader.bindUniform("ProjectionViewModel", pvm);
+
+	// Bind the color
+	m_colorShader.bindUniform("BaseColor", glm::vec4(1));
+
+	m_bunnyMesh.draw();
+}
+
 void GraphicsApp::ObjDraw(glm::mat4 pv, glm::mat4 transform, aie::OBJMesh* objMesh)
 {
 	m_normalLitShader.bind();
@@ -769,6 +801,19 @@ void GraphicsApp::PhongDraw(glm::mat4 pvm, glm::mat4 transform, float time)
 	// Bind the transform using the one provided
 	m_phongShader.bindUniform("ModelMatrix", transform);
 
-	if (m_toggleBunny) m_bunnyMesh.draw();
-	if (m_togglePlain) m_quadMesh.Draw();
+	//if (m_toggleBunny) 
+	m_bunnyMesh.draw();
+	//if (m_togglePlain) m_quadMesh.Draw();
+}
+
+void GraphicsApp::BoxDraw(glm::mat4 pvm)
+{
+	// Bind the shader
+	m_simpleShader.bind();
+
+	// Bind the transform
+	m_simpleShader.bindUniform("ProjectionViewModel", pvm);
+
+	// Draw the quad using Mesh's draw
+	m_quadMesh.Draw();
 }

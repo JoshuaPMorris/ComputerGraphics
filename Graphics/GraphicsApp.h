@@ -39,36 +39,35 @@ protected:
 	bool LaunchShaders();
 	void ImGUIRefesher();
 
+	// Loaders
 	bool QuadLoader();
-	void QuadDraw(glm::mat4 pvm);
-
 	bool BunnyLoader();
-	void BunnyDraw(glm::mat4 pvm);
-	
-	// For textured OBJs
-	void ObjDraw(glm::mat4 pv, glm::mat4 transform, aie::OBJMesh* objMesh);
-
+	bool SpearLoader();
+	bool BookLoader();
+	bool R2D2Loader();
 	bool ObjLoader(aie::OBJMesh& objMesh, glm::mat4& transform,
 		float scale, const char* filepath, const char* filename,
 		bool flipTexture);
 
-	bool SpearLoader();
+	bool BoxLoading();
 
-	bool BookLoader();
-
-	bool R2D2Loader();
-
+	// Drawers
+	void QuadDraw(glm::mat4 pvm);
+	void BunnyDraw(glm::mat4 pvm);
+	void ObjDraw(glm::mat4 pv, glm::mat4 transform, aie::OBJMesh* objMesh);
 	void PhongDraw(glm::mat4 pvm, glm::mat4 transform, float time);
 
-	int m_postProcessEffect;
-
-	bool BoxLoading();
 	void BoxDraw(glm::mat4 pvm);
 
 	// Mesh variables
 	float m_planetSpeed;
+	int m_postProcessEffect;
+	bool m_toggleParticles;
 
-	int m_numberOfSpear;
+	int m_numOfSpear;
+	int m_numOfBunny;
+	int m_numOfBook;
+	int m_numOfR2D2;
 
 	// Light values
 	glm::vec3 m_sunLightColor;
@@ -104,7 +103,7 @@ protected:
 	bool m_toggleSolarsystem;
 	bool m_toggleBunny;
 	bool m_toggleSoulSpear;
-	bool m_toggleR2d2;
+	bool m_toggleR2D2;
 	bool m_toggleBook;
 
 	Scene*				m_scene;
@@ -122,6 +121,8 @@ protected:
 	aie::ShaderProgram  m_particleShader;
 
 	aie::RenderTarget	m_renderTarget;
+
+	std::list<Instance*>	m_instances;
 
 	Mesh				m_quadMesh;
 	Mesh				m_fullScreenQuad;
