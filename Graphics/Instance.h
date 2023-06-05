@@ -29,5 +29,7 @@ protected:
 	glm::mat4 m_transform;
 	aie::OBJMesh* m_mesh;
 	aie::ShaderProgram* m_shader;
+	glm::vec3 m_ambientLight;
+
 };
 

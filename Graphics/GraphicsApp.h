@@ -69,16 +69,6 @@ protected:
 	int m_numOfBook;
 	int m_numOfR2D2;
 
-	// Light values
-	glm::vec3 m_sunLightColor;
-	glm::vec3 m_horizontalLightColor;
-	glm::vec3 m_verticalLightColor;
-
-	float m_sunLightSpeed;
-
-	float m_horizontalLightPosition;
-	float m_verticalLightPosition;
-
 	bool m_toggleSunLight;
 	bool m_toggleHorizontalLight;
 	bool m_toggleVerticalLight;
@@ -145,14 +135,11 @@ protected:
 	OribtalCamera		m_orbitalCamera;
 	StationaryCamera	m_stationaryCamera;
 
-	Light*				m_sunLight;
-	Light*				m_horizontalLight;
-	Light*				m_verticalLight;
-
-	Light				m_light;
 	glm::vec3			m_ambientLight;
 	float				m_specularStrength;
 
 	ParticleEmitter*	m_emitter;
 	glm::mat4			m_particleEmitTransform;
+
+	Light m_light;
 };

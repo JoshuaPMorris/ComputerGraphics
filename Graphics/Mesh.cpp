@@ -1,5 +1,6 @@
 #include <gl_core_4_4.h>
 #include "Mesh.h"
+#include <fstream>
 
 Mesh::~Mesh()
 {
@@ -28,13 +29,13 @@ void Mesh::InitialiseQuad()
 	// Define the 6 vertices fir our two triangles to make a quad
 	// in a counter-clockwise direction.
 	Vertex vertices[6];
-	vertices[0].position = { -0.5f, 0, 0.5f, 1.0f };
-	vertices[1].position = { 0.5f, 0, 0.5f, 1.0f };
+	vertices[0].position = { -0.5f, 0,  0.5f, 1.0f };
+	vertices[1].position = {  0.5f, 0,  0.5f, 1.0f };
 	vertices[2].position = { -0.5f, 0, -0.5f, 1.0f };
 
 	vertices[3].position = { -0.5f, 0, -0.5f, 1.0f };
-	vertices[4].position = { 0.5f, 0, 0.5f, 1.0f };
-	vertices[5].position = { 0.5f, 0, -0.5f, 1.0f };
+	vertices[4].position = {  0.5f, 0,  0.5f, 1.0f };
+	vertices[5].position = {  0.5f, 0, -0.5f, 1.0f };
 
 	vertices[0].normal = { 0, 1, 0, 0 };
 	vertices[1].normal = { 0, 1, 0, 0 };
@@ -42,6 +43,13 @@ void Mesh::InitialiseQuad()
 	vertices[3].normal = { 0, 1, 0, 0 };
 	vertices[4].normal = { 0, 1, 0, 0 };
 	vertices[5].normal = { 0, 1, 0, 0 };
+
+	vertices[0].texCoord = { 0.0f, 1.0f };
+	vertices[1].texCoord = { 1.0f, 1.0f };
+	vertices[2].texCoord = { 0.0f, 0.0f };
+	vertices[3].texCoord = { 0.0f, 0.0f };
+	vertices[4].texCoord = { 1.0f, 1.0f };
+	vertices[5].texCoord = { 1.0f, 0.0f };
 
 	// Fill the vertex buffer
 	glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(Vertex),
@@ -55,6 +63,9 @@ void Mesh::InitialiseQuad()
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_TRUE, sizeof(Vertex), (void*)16);
 
+	// enable third element as texture coords
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)32);
 
 	// Next we unbind the buffers
 	glBindVertexArray(0);
@@ -81,12 +92,12 @@ void Mesh::InitialiseFullScreenQuad()
 
 
 	float vertices[] = {
-		-1, 1,	//	Top Left
+		-1,  1,	// Top Left
 		-1, -1,	// Bottom Left
-		1, 1,	// Top Right
+		 1,  1,	// Top Right
 		-1, -1,	// Bottom Left
-		1, -1,	// Bottom RIght
-		1, 1	// Top Right
+		 1, -1,	// Bottom RIght
+		 1,  1	// Top Right
 	};
 
 	// Fill the vertex buffer
@@ -133,6 +144,10 @@ void Mesh::Initialise(unsigned int vertexCount, const Vertex* vertices, unsigned
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_TRUE, sizeof(Vertex), (void*)16);
 	
+	// enable third element as texture coords
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)32);
+
 	// Bind the indices if there are any defined
 
 	if (indexCount != 0)

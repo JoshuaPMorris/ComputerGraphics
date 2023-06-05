@@ -1,5 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
+#include <vector>
 
 class Mesh
 {
@@ -26,6 +27,8 @@ public:
 	// Will be used for implemetive a primitive
 	void Initialise(unsigned int vertexCount, const Vertex* vertices, 
 		unsigned int indexCount = 0, unsigned int* indices = nullptr);
+
+	void LoadMaterial(const char* fileName);
 
 	virtual void Draw();
 

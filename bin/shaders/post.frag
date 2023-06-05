@@ -227,7 +227,7 @@ void main() {
         }
         case 9: // Distance Fog
         {
-            FragColor = DistanceFog(texCoord);
+            FragColor = Default(texCoord);
             break;
         }
         case 10: // Depth of Field

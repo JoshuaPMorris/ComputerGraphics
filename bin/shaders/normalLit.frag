@@ -21,7 +21,7 @@ uniform sampler2D normalTexture;
 uniform vec3 Ka; // The ambient material colour
 uniform vec3 Kd; // The diffuse material colour
 uniform vec3 Ks; // The specular material color
-uniform float SpecularPower; // The specular power of Ks
+uniform float specularPower; // The specular power of Ks
 
 // Light data
 uniform vec3 AmbientColor;
@@ -42,7 +42,7 @@ vec3 Specular(vec3 direction, vec3 color, vec3 normal, vec3 view)
 {
     vec3 R = reflect(direction, normal);
 
-    float specularTerm = pow(max(0, dot(R, view)), SpecularPower);
+    float specularTerm = pow(max(0, dot(R, view)), specularPower);
 
     return specularTerm * color;
 }
@@ -60,7 +60,10 @@ void main() {
     vec3 texSpecular = texture(specularTexture, vTexCoord).rgb;
     vec3 texNormal = texture(normalTexture, vTexCoord).rgb;
 
-    N = TBN * (texNormal * 2 - 1);
+    N = normalize(TBN * (texNormal * 2 - 1));
+    
+    // Calculate the diffuse value of light from the global source
+    vec3 diffuseTotal = Diffuse(L, LightColor, N);
 
     // Calculate the negative light direction (Lambert term)
     float lambertTerm = max(0, min(1, dot(N, -L)));
@@ -69,9 +72,6 @@ void main() {
     vec3 V = normalize(CameraPosition - vPosition.xyz);
     // ..and the reflection vector
     vec3 R = reflect(L, N);
-
-    // Calculate the diffuse value of light from the global source
-    vec3 diffuseTotal = Diffuse(L, LightColor, N);
 
     // Calculate the specular value of light from the global source
     vec3 specularTotal = Specular(L, LightColor, N, V);

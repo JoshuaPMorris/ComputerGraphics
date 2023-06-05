@@ -44,10 +44,6 @@ bool GraphicsApp::startup() {
 	m_toggleHorizontalLight = true;
 	m_toggleVerticalLight	= true;
 
-	m_sunLightColor			= glm::vec3(0, 0, 1);
-	m_horizontalLightColor	= glm::vec3(1, 0, 0);
-	m_verticalLightColor	= glm::vec3(0, 1, 0);
-
 	m_planetSpeed = 1;
 
 	m_numOfSpear = 0;
@@ -56,11 +52,8 @@ bool GraphicsApp::startup() {
 	m_numOfR2D2 = 0;
 
 
-	Light light = Light(vec3(1, -1, 1), vec3(4, 3, 5), 1);
-	//light.color =			{ 4, 3, 5 };
-	//light.direction =		{ 1, -1, 1 };
-	m_ambientLight =		{ 30.f, 30.f, 30.f };
-	m_specularStrength =	0.f;
+	m_specularStrength =	10.f;
+	
 	m_postProcessEffect =	0;
 
 	m_emitter = new ParticleEmitter();
@@ -83,21 +76,15 @@ bool GraphicsApp::startup() {
 
 	m_camera = new StationaryCamera();
 
+	Light light = Light(vec3(-5, 3, 0), vec3(0.5, 0.3, 0.1), 1); // Sun
+	m_ambientLight =		{ 1.f, 1.f, 1.f };
+
 	m_scene = new Scene(&*m_camera, glm::vec2(getWindowWidth(),
 		getWindowHeight()), light, m_ambientLight);
 
-	m_scene->AddPointLights(glm::vec3(-5, 3, 0), m_sunLightColor, 50);
-	m_scene->AddPointLights(glm::vec3(5, 3, 0), m_horizontalLightColor, 50);
-	m_scene->AddPointLights(glm::vec3(-5, 3, 0), m_verticalLightColor, 50);
-
-	m_sunLight = &m_scene->GetPointLights()[0];
-	m_horizontalLight = &m_scene->GetPointLights()[1];
-	m_verticalLight = &m_scene->GetPointLights()[2];
-
-	m_sunLightSpeed = 2;
-
-	m_horizontalLightPosition = 5;
-	m_verticalLightPosition = 5;
+	m_scene->AddPointLights(glm::vec3(5, 3, 0), glm::vec3(0, 0.3, 0.7), 1);
+	m_scene->AddPointLights(glm::vec3(-5, 3, 0), glm::vec3(0, 0.3, 0.7), 1);
+	m_scene->AddPointLights(glm::vec3(-5, 3, 0), glm::vec3(0, 0.3, 0.7), 1);
 
 	return LaunchShaders();
 }
@@ -134,20 +121,9 @@ void GraphicsApp::update(float deltaTime) {
 	}
 #pragma endregion
 
-#pragma region LightVariables
-	m_sunLight->color = m_sunLightColor;
-	m_sunLight->direction = glm::normalize(glm::vec3(glm::cos(time * m_sunLightSpeed), glm::sin(time * m_sunLightSpeed), 0));
-	
-	m_horizontalLight->color = m_horizontalLightColor;
-	m_horizontalLight->position = glm::vec3(m_horizontalLightPosition, 0, 0);
-	
-	m_verticalLight->color = m_verticalLightColor;
-	m_verticalLight->position = glm::vec3(0, m_verticalLightPosition, 0);
-#pragma endregion
-
 	// rotate camera
-	m_viewMatrix = glm::lookAt(vec3(glm::sin(time) * 10, 10, glm::cos(time) * 10),
-		vec3(0), vec3(0, 1, 0));
+	//m_viewMatrix = glm::lookAt(vec3(glm::sin(time) * 10, 10, glm::cos(time) * 10),
+	//	vec3(0), vec3(0, 1, 0));
 
 	// wipe the gizmos clean for this frame
 	Gizmos::clear();
@@ -198,15 +174,6 @@ void GraphicsApp::update(float deltaTime) {
 	}
 #pragma endregion
 
-#pragma region LightSpheres
-	if (m_toggleSunLight)
-		aie::Gizmos::addSphere(m_sunLight->position, 0.5, 10, 10, glm::vec4(m_sunLight->color, 0.5));
-	if (m_toggleHorizontalLight)
-		aie::Gizmos::addSphere(m_horizontalLight->position, 0.5, 10, 10, glm::vec4(m_horizontalLight->color, 0.5));
-	if (m_toggleVerticalLight)
-		aie::Gizmos::addSphere(m_verticalLight->position, 0.5, 10, 10, glm::vec4(m_verticalLight->color, 0.5));
-#pragma endregion
-
 #pragma region ToggleInstances
 	if (m_toggleSoulSpear)
 	{
@@ -223,7 +190,7 @@ void GraphicsApp::update(float deltaTime) {
 	if (m_toggleR2D2)
 	{
 		m_scene->AddInstance(new Instance(glm::vec3(2 * m_numOfR2D2, 0, 0), glm::vec3(0, 30 * m_numOfR2D2, 0),
-			glm::vec3(1), &m_r2d2Mesh, &m_normalLitShader));
+			glm::vec3(0.01), &m_r2d2Mesh, &m_normalLitShader));
 		m_toggleR2D2 = false;
 	}
 	if (m_toggleBook)
@@ -269,7 +236,11 @@ void GraphicsApp::draw() {
 
 	m_particleShader.bind();
 	m_particleShader.bindUniform("ProjectionViewModel", pv * m_particleEmitTransform);
-	m_emitter->Draw();
+
+	if (m_toggleParticles)
+	{
+		m_emitter->Draw();
+	}
 
 	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
 
@@ -283,7 +254,7 @@ void GraphicsApp::draw() {
 
 	if (m_toggleBunny)
 	{
-		PhongDraw(pv, m_bunnyTransform, time);
+		//PhongDraw(pv, m_bunnyTransform, time);
 	}
 
 	// Bind the post process shader and the texture
@@ -296,7 +267,6 @@ void GraphicsApp::draw() {
 	m_renderTarget.getTarget(0).bind(0);
 
 	m_fullScreenQuad.Draw();
-
 }
 
 void GraphicsApp::SolarSystem(float time)
@@ -394,10 +364,10 @@ bool GraphicsApp::LaunchShaders()
 	m_fullScreenQuad.InitialiseFullScreenQuad();
 
 #pragma region LoadingMeshes
-	ObjLoader(m_spearMesh, m_spearTransform, 1,   "./soulspear/", "soulspear.obj", true);
-	ObjLoader(m_bunnyMesh, m_bunnyTransform, 0.1, "./stanford/",  "Bunny.obj",	   true);
-	ObjLoader(m_r2d2Mesh,  m_r2d2Transform,	 0.01,   "./r2d2/",      "r2-d2.obj",     true);
-	ObjLoader(m_bookMesh,  m_bookTransform,	 0.1,   "./book/",      "book_2.obj",    true);
+	ObjLoader(m_spearMesh, m_spearTransform, 1,	   "./soulspear/", "soulspear.obj", true);
+	ObjLoader(m_bunnyMesh, m_bunnyTransform, 0.1,  "./stanford/",  "Bunny.obj",	    true);
+	ObjLoader(m_r2d2Mesh,  m_r2d2Transform,	 0.01, "./r2d2/",      "r2-d2.obj",		false);
+	ObjLoader(m_bookMesh,  m_bookTransform,	 0.1,  "./book/",      "book_2.obj",	false);
 #pragma endregion
 
 	return true;
@@ -406,7 +376,7 @@ bool GraphicsApp::LaunchShaders()
 void GraphicsApp::ImGUIRefesher()
 {
 #pragma region ShaderEffects
-	ImGui::Begin("ShaderEffects");
+	ImGui::Begin("Shader Effects");
 	ImGui::InputInt("Post Process Effect",
 		&m_postProcessEffect, 1, 2);
 	ImGui::Checkbox("Particles", &m_toggleParticles);
@@ -503,35 +473,7 @@ void GraphicsApp::ImGUIRefesher()
 #pragma endregion
 
 #pragma region LightSettings
-	ImGui::Begin("Light Settings");
-	if (ImGui::CollapsingHeader("SunLight"))
-	{
-		ImGui::DragFloat3("Sun Color",
-			&m_sunLightColor[0], 0.1, 0, 255);
-		ImGui::DragFloat("Sun Speed",
-			&m_sunLightSpeed, 0.1, -20, 20);
-		ImGui::Checkbox("Toggle SunLight Sphere",
-			&m_toggleSunLight);
-	}
-	if (ImGui::CollapsingHeader("Horizontal Light"))
-	{
-		ImGui::DragFloat3("Horizontal Color",
-			&m_horizontalLightColor[0], 0.1, 0, 255);
-		ImGui::DragFloat("Horizontal Position",
-			&m_horizontalLightPosition, 1, -100, 100);
-		ImGui::Checkbox("Toggle HorizontalLight Sphere",
-			&m_toggleHorizontalLight);
-	}
-	if (ImGui::CollapsingHeader("Vertical Light"))
-	{
-		ImGui::DragFloat3("Vertical Color",
-			&m_verticalLightColor[0], 0.1, 0, 255);
-		ImGui::DragFloat("Vertical Position",
-			&m_verticalLightPosition, 0, -100, 100);
-		ImGui::Checkbox("Toggle VerticalLight Sphere",
-			&m_toggleVerticalLight);
-	}
-	ImGui::End();
+	m_scene->ImGUI();
 #pragma endregion
 }
 
@@ -763,10 +705,11 @@ void GraphicsApp::ObjDraw(glm::mat4 pv, glm::mat4 transform, aie::OBJMesh* objMe
 		glm::vec3(glm::inverse(m_viewMatrix)[3]));
 
 	// Bind the directional light we defined
-	m_normalLitShader.bindUniform("LightDirection", m_light.direction);
-	m_normalLitShader.bindUniform("LightColor", m_light.color);
+	//m_normalLitShader.bindUniform("LightDirection", m_light.direction);
+	//m_normalLitShader.bindUniform("LightColor", m_light.color);
 	m_normalLitShader.bindUniform("AmbientColor", m_ambientLight);
 	m_normalLitShader.bindUniform("SpecularPower", m_specularStrength);
+
 
 	// Bind the texture location
 	m_normalLitShader.bindUniform("diffuseTexture", 0);

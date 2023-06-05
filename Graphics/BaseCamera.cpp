@@ -3,6 +3,10 @@
 
 BaseCamera::BaseCamera()
 {
+    m_phi = 0;
+    m_theta = 0;
+
+    m_position = glm::vec3(0);
 }
 
 BaseCamera::~BaseCamera()

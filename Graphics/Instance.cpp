@@ -4,6 +4,7 @@
 #include "OBJMesh.h"
 #include "Texture.h"
 #include "GraphicsApp.h"
+#include <imgui.h>
 
 Instance::Instance(glm::mat4 transform, aie::OBJMesh* mesh, aie::ShaderProgram* shader) :
 	m_transform(transform), m_mesh(mesh), m_shader(shader)
@@ -20,6 +21,7 @@ void Instance::Draw(Scene* scene)
 {
 	// Set the shader pipeline 
 	m_shader->bind();
+
 	// Bind all relevent uniforms for pur shaders
 	auto pvm = scene->GetCamera()->getProjectionMatrix(
 		scene->GetWindowSize().x, scene->GetWindowSize().y) *
@@ -32,10 +34,8 @@ void Instance::Draw(Scene* scene)
 
 	int numberOfLights = scene->GetNumberOfLights();
 	m_shader->bindUniform("numLights", numberOfLights);
-	m_shader->bindUniform("PointLightPositions", numberOfLights,
-		scene->GetPointLightPositions());
-	m_shader->bindUniform("PointLightColors", numberOfLights,
-		scene->GetPointLightColors());
+	m_shader->bindUniform("PointLightPositions", numberOfLights, scene->GetPointLightPositions());
+	m_shader->bindUniform("PointLightColors",    numberOfLights, scene->GetPointLightColors());
 
 	// Bind the directional light we defined
 	m_shader->bindUniform("LightDirection", scene->GetLight().direction);
@@ -50,6 +50,6 @@ glm::mat4 Instance::MakeTransform(glm::vec3 position, glm::vec3 eularAngles, glm
 	return glm::translate(glm::mat4(1), position)
 		* glm::rotate(glm::mat4(1), glm::radians(eularAngles.z), glm::vec3(0, 0, 1))
 		* glm::rotate(glm::mat4(1), glm::radians(eularAngles.y), glm::vec3(0, 1, 0))
-		* glm::rotate(glm::mat4(1), glm::radians(eularAngles.z), glm::vec3(1, 0, 0))
+		* glm::rotate(glm::mat4(1), glm::radians(eularAngles.x), glm::vec3(1, 0, 0))
 		* glm::scale(glm::mat4(1), scale);
 }
