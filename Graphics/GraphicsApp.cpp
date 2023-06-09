@@ -366,7 +366,7 @@ bool GraphicsApp::LaunchShaders()
 #pragma region LoadingMeshes
 	ObjLoader(m_spearMesh, m_spearTransform, 1,	   "./soulspear/", "soulspear.obj", true);
 	ObjLoader(m_bunnyMesh, m_bunnyTransform, 0.1,  "./stanford/",  "Bunny.obj",	    true);
-	ObjLoader(m_r2d2Mesh,  m_r2d2Transform,	 0.01, "./r2d2/",      "r2-d2.obj",		false);
+	ObjLoader(m_r2d2Mesh,  m_r2d2Transform,	 0.01, "./r2d2/",      "R2-Unit.obj",		false);
 	ObjLoader(m_bookMesh,  m_bookTransform,	 0.1,  "./book/",      "book_2.obj",	false);
 #pragma endregion
 
@@ -407,12 +407,6 @@ void GraphicsApp::ImGUIRefesher()
 	{
 		m_toggleR2D2 = true;
 		m_numOfR2D2++;
-		// Rotate, Move, Scale
-	}
-	if (ImGui::Button("Book"))
-	{
-		m_toggleBook = true;
-		m_numOfBook++;
 		// Rotate, Move, Scale
 	}
 	if (ImGui::Button("Clear All"))
